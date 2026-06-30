@@ -1,0 +1,45 @@
+---
+description: Java Selenide e2e conventions — etalon and generated tests in GitHub project repos
+globs: projects/**/*.java,tests-java/**/*.java,templates/project-tests/**/*.java
+alwaysApply: false
+---
+
+# Java E2E tests (project repo)
+
+Each Allure TestOps project gets its own GitHub repo:  
+`https://github.com/autotests-cloud/{project-name}-{projectId}`
+
+**Эталон (разработка):** `tests-java/` — образец стиля (`LoginTests.java`), не копируется в project repo.
+
+**Шаблон (bootstrap):** `templates/project-tests/` — только инфраструктура, без тестовых классов.
+
+Local working copy per project: `projects/{repo_name}/`
+
+## Layout in project repo
+
+```
+projects/{repo_name}/src/test/java/tests/
+  TestBase.java
+  LoginTests.java          # @Feature «Авторизация», несколько @Test
+  RegistrationTests.java   # @Feature «Регистрация»
+```
+
+## Naming
+
+- **Class** — по `@Feature` / области: `LoginTests`, `RegistrationTests`
+- **Method** — по сценарию: `successfulAuthorizationTest`, `wrongPasswordAuthorizationTest`
+- **Не дублировать** синонимы: `SignInTests` → `LoginTests`
+- **Append** — новый кейс той же фичи добавляется в существующий класс
+
+## Generated test method
+
+- Package `tests`, class extends `TestBase`
+- `@AllureId("{testOpsId}")` on `@Test`
+- `@DisplayName` на классе — фича; на методе — название кейса из TestOps
+- Follow `tests-java/.../LoginTests.java` for steps and `[data-testid=…]`
+- Workflow skill: `qa-guru-home/.cursor/skills/automate-manual-test/SKILL.md`
+
+## CI
+
+GitHub Actions: `./gradlew test --tests tests.LoginTests.successfulAuthorizationTest` для одного кейса.  
+Allure 3 report: `https://autotests-cloud.github.io/{repo}/reports/{run_id}/awesome/index.html`

@@ -1,0 +1,13 @@
+# Symlink template — copy to app-path-local (gitignored).
+#
+#   cd tests-java
+#   ln -snf ../frontend app-path-local
+#
+# Preview (file://, no server):
+#   file://…/tests-java/app-path-local/components.html
+#   file://…/tests-java/app-path-local/login.html
+#   open -a "Google Chrome" "file://…/tests-java/app-path-local/components.html"
+#
+# E2e HTTP: python -m http.server 3000 from frontend/ (cwd = template-project/frontend/)
+#   baseUrl=http://localhost:3000/  →  open("/login.html"), open("/header.html")
+#   rule e2e-debug-run, -Denv=local

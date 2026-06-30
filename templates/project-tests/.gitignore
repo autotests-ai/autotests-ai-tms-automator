@@ -1,0 +1,7 @@
+.idea/*
+.vscode/*
+.gradle/*
+build/*
+bin/*
+allure-results/*
+history.jsonl

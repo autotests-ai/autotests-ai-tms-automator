@@ -1,0 +1,162 @@
+/*
+ *
+ *   ╔══════════════════════════════════════════╗
+ *   ║           t e s t s - j a v a            ║
+ *   ╚══════════════════════════════════════════╝
+ *
+ *        (\_/)
+ *        ( •_•)
+ *        / >gradle test -Denv=local
+ *
+ *              .-------.
+ *             /  ✓ ✓ ✓  \
+ *            |  Selenide |
+ *            |  Allure   |
+ *            |  JUnit 5  |
+ *             \  ☕ 🚀  /
+ *              '-------'
+ *
+ *   "Зелёный билд — лучший вид счастья"
+ *
+ */
+
+buildscript {
+    ext {
+        allurePluginVersion = '4.1.0'
+        allureVersion       = '3.13.0'
+        allureBomVersion    = '2.35.2'
+        selenideVersion     = '7.16.2'
+        ownerVersion        = '1.0.12'
+        junitVersion        = '5.11.4'
+        slf4jVersion        = '2.0.17'
+        testParallelForks   = 1
+        defaultEnv          = 'local'
+    }
+}
+
+plugins {
+    id 'java-library'
+    id 'io.qameta.allure' version "${allurePluginVersion}"
+}
+
+def allureReportMode = System.getProperty('allureReportMode', 'allure3')
+
+repositories {
+    mavenCentral()
+}
+
+allure {
+    version = allureVersion
+    adapter {
+        allureJavaVersion = allureBomVersion
+        resultsDir.set(layout.buildDirectory.dir('allure-results'))
+        autoconfigure.set(allureReportMode != 'none')
+        aspectjWeaver.set(allureReportMode != 'none')
+        frameworks {
+            junit5 {
+                enabled.set(allureReportMode != 'none')
+                autoconfigureListeners.set(allureReportMode != 'none')
+            }
+        }
+    }
+    report {
+        configFile.set(layout.projectDirectory.file('allurerc.json'))
+    }
+}
+
+dependencies {
+    testImplementation platform("io.qameta.allure:allure-bom:${allureBomVersion}")
+    testImplementation (
+            'io.qameta.allure:allure-jupiter',
+            'io.qameta.allure:allure-selenide',
+            "com.codeborne:selenide:${selenideVersion}",
+            "org.aeonbits.owner:owner:${ownerVersion}",
+            "org.junit.jupiter:junit-jupiter:${junitVersion}")
+    testRuntimeOnly (
+            'org.junit.platform:junit-platform-launcher',
+            "org.slf4j:slf4j-simple:${slf4jVersion}")
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+def resolveConfiguredBaseUrl = {
+    def env = System.getProperty('env', defaultEnv)
+    def props = new Properties()
+    def configFile = file("src/test/resources/config/${env}.properties")
+    if (configFile.exists()) {
+        configFile.withInputStream { props.load(it) }
+    }
+    def baseUrl = (System.getProperty('baseUrl') ?: props.getProperty('baseUrl', '')).trim()
+    def basePath = (System.getProperty('basePath') ?: props.getProperty('basePath', '')).trim()
+    if (baseUrl) {
+        return baseUrl.endsWith('/') ? baseUrl : "${baseUrl}/"
+    }
+    if (basePath) {
+        return null
+    }
+    throw new GradleException("Set baseUrl or basePath in config/${env}.properties")
+}
+
+def runAppHealthCheck = {
+    if (System.getProperty('skipHealthCheck', 'false') == 'true') {
+        return
+    }
+    def baseUrl = resolveConfiguredBaseUrl()
+    if (baseUrl == null || !baseUrl.startsWith('http')) {
+        return
+    }
+    def healthUrl = new URL("${baseUrl}login.html")
+    try {
+        def conn = (java.net.HttpURLConnection) healthUrl.openConnection()
+        conn.setRequestMethod('GET')
+        conn.setConnectTimeout(5000)
+        conn.setReadTimeout(5000)
+        def code = conn.responseCode
+        if (code != 200) {
+            throw new GradleException(
+                    "App health check failed: GET ${healthUrl} returned HTTP ${code}. " +
+                    'Start HTTP server from frontend/: cd frontend && python -m http.server 3000'
+            )
+        }
+    } catch (java.net.ConnectException | java.net.SocketTimeoutException e) {
+        throw new GradleException(
+                "App health check failed: cannot reach ${healthUrl} (${e.class.simpleName}). " +
+                'Start HTTP server from frontend/: cd frontend && python -m http.server 3000',
+                e
+        )
+    }
+}
+
+tasks.register('healthCheck') {
+    group = 'verification'
+    description = 'GET baseUrl/login.html — requires HTTP server from frontend/ (port 3000)'
+    doLast runAppHealthCheck
+}
+
+test {
+    dependsOn healthCheck
+    useJUnitPlatform {
+        def includeTagsProp = System.getProperty('includeTags')
+        if (includeTagsProp) {
+            includeTags(*(includeTagsProp.split(',')*.trim()))
+        }
+        def excludeTagsProp = System.getProperty('excludeTags')
+        if (excludeTagsProp) {
+            excludeTags(*(excludeTagsProp.split(',')*.trim()))
+        }
+    }
+    systemProperty 'env', System.getProperty('env', defaultEnv)
+    systemProperty 'allureReportMode', allureReportMode
+    maxParallelForks = testParallelForks
+}
+
+if (allureReportMode == 'none') {
+    tasks.named('test', Test).configure {
+        systemProperties.remove('allure.results.directory')
+        doLast {
+            delete layout.buildDirectory.dir('allure-results')
+        }
+    }
+}

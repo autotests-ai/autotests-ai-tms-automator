@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Статус «Автоматизировать» — варианты для TestOps</title>
+  <style>
+    :root {
+      --bg: #1a1d23;
+      --surface: #242830;
+      --surface-2: #2d323c;
+      --text: #e8eaed;
+      --text-muted: #9aa0a8;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 32px 24px 64px;
+    }
+
+    h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 8px; }
+    .lead { color: var(--text-muted); max-width: 760px; margin: 0 0 32px; font-size: 0.95rem; }
+
+    .section { margin-bottom: 40px; }
+    .section h2 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin: 0 0 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+      gap: 16px;
+    }
+
+    @media (max-width: 560px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .card.recommended {
+      border-color: rgba(79, 70, 229, 0.45);
+      box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.12);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .card-title { font-weight: 600; font-size: 0.95rem; }
+    .badge-rec {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #a5b4fc;
+      background: rgba(79, 70, 229, 0.18);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .card-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin: 0 0 16px;
+    }
+
+    /* ——— Плашка: сейчас | вариант ——— */
+    .plate {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .plate { grid-template-columns: 1fr; }
+    }
+
+    .plate-col-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .plate-col-label.bad { color: #f87171; }
+    .plate-col-label.good { color: #86efac; }
+
+    .plate-block { margin-bottom: 12px; }
+    .plate-block:last-child { margin-bottom: 0; }
+
+    .block-caption {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    /* ——— TestOps-like status chip ——— */
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px 4px 6px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .status-chip img {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .chip-current {
+      background: #5eb3f6;
+      color: #1a3a5c;
+    }
+
+    .chip-indigo {
+      background: rgba(79, 70, 229, 0.22);
+      color: #c7d2fe;
+      border: 1px solid rgba(129, 140, 248, 0.35);
+    }
+
+    .chip-indigo-solid {
+      background: #4338ca;
+      color: #eef2ff;
+      border: 1px solid #4f46e5;
+    }
+
+    .chip-teal {
+      background: rgba(13, 148, 136, 0.2);
+      color: #99f6e4;
+      border: 1px solid rgba(45, 212, 191, 0.35);
+    }
+
+    .chip-amber {
+      background: rgba(180, 83, 9, 0.22);
+      color: #fde68a;
+      border: 1px solid rgba(217, 119, 6, 0.4);
+    }
+
+    .chip-slate {
+      background: rgba(71, 85, 105, 0.35);
+      color: #e2e8f0;
+      border: 1px solid rgba(100, 116, 139, 0.45);
+    }
+
+    .chip-violet {
+      background: rgba(109, 40, 217, 0.22);
+      color: #ddd6fe;
+      border: 1px solid rgba(139, 92, 246, 0.35);
+    }
+
+    /* ——— Dropdown mock ——— */
+    .dropdown-mock {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 0;
+      font-size: 13px;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      color: var(--text);
+    }
+
+    .dropdown-item.selected { background: rgba(255, 255, 255, 0.06); }
+
+    .dropdown-item .check {
+      width: 14px;
+      color: var(--text-muted);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .dropdown-item .spacer { width: 14px; flex-shrink: 0; }
+
+    .dropdown-item img {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .dropdown-item .emoji-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .hex {
+      font-family: ui-monospace, monospace;
+      font-size: 0.76rem;
+      color: #94a3b8;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 8px 10px;
+      border-radius: 6px;
+    }
+
+    .hex strong { color: var(--text); }
+
+    .tips {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      max-width: 760px;
+    }
+
+    .tips ul { margin: 0; padding-left: 1.2rem; color: var(--text-muted); font-size: 0.9rem; }
+    .tips li { margin-bottom: 8px; }
+    .tips li strong { color: var(--text); }
+
+    .icon-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .icon-cell { text-align: center; }
+    .icon-cell img { border-radius: 8px; display: block; }
+    .icon-cell span { font-size: 0.68rem; color: var(--text-muted); margin-top: 6px; display: block; }
+
+    .icon-compare {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      padding: 16px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .icon-compare-item { text-align: center; }
+    .icon-compare-item .size-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      display: block;
+    }
+    .icon-compare-item .name-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .icon-compare-item.bad .name-label { color: #f87171; }
+    .icon-compare-item.good .name-label { color: #86efac; }
+
+    /* реальный размер в TestOps — 16px, без сглаживания */
+    .icon-16 { width: 16px; height: 16px; border-radius: 3px; image-rendering: pixelated; }
+  </style>
+</head>
+<body>
+  <h1>Статус «Автоматизировать» — сравнение на тёмном фоне</h1>
+  <p class="lead">
+    В каждой плашке — <strong>оба контекста</strong>: чип в таблице кейсов и пункт в выпадающем меню.
+    Слева всегда «как сейчас», справа — предлагаемый вариант.
+    Иконки перерисованы под <strong>16×16 px</strong> — именно в таком размере TestOps показывает их в чипе и меню.
+    <a href="icon-shapes-demo.html" style="color:#818cf8">14 вариантов формы →</a>
+  </p>
+
+  <div class="section">
+    <h2>Иконка в реальном размере (16 px)</h2>
+    <div class="card">
+      <p class="card-desc">Старая версия с тонкими линиями схлопывалась в точку. Ниже — три варианта, как они выглядят в UI.</p>
+      <div class="icon-compare">
+        <div class="icon-compare-item bad">
+          <span class="name-label">Было (тонкие линии)</span>
+          <img class="icon-16" src="icons/status-automate-indigo-flat-64.png" alt="">
+          <span class="size-label">16 px — нечитаемо</span>
+        </div>
+        <div class="icon-compare-item good">
+          <span class="name-label">▶ Play (рекомендуем)</span>
+          <img class="icon-16" src="icons/status-automate-indigo-play-64.png" alt="">
+          <span class="size-label">16 px — «запустить»</span>
+        </div>
+        <div class="icon-compare-item good">
+          <span class="name-label">&lt;/&gt; Code</span>
+          <img class="icon-16" src="icons/status-automate-indigo-code-64.png" alt="">
+          <span class="size-label">16 px — «сгенерировать код»</span>
+        </div>
+      </div>
+      <div class="icon-compare" style="margin-bottom:0">
+        <div class="icon-compare-item"><span class="name-label">Play 64 px</span><img src="icons/status-automate-indigo-play-64.png" width="48" height="48" style="border-radius:10px"><span class="size-label">для загрузки в TestOps</span></div>
+        <div class="icon-compare-item"><span class="name-label">Code 64 px</span><img src="icons/status-automate-indigo-code-64.png" width="48" height="48" style="border-radius:10px"><span class="size-label">альтернатива</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Главное сравнение</h2>
+    <div class="card recommended">
+      <div class="card-header">
+        <span class="card-title">Индиго + иконка play</span>
+        <span class="badge-rec">рекомендуем</span>
+      </div>
+      <p class="card-desc">Спокойный корпоративный тон: похоже на dev-tool, а не на «нейросеть». Хорошо читается в списке и в меню.</p>
+      <div class="plate">
+        <div>
+          <div class="plate-col-label bad">Сейчас</div>
+          <div class="plate-block">
+            <div class="block-caption">Чип в списке</div>
+            <span class="status-chip chip-current">
+              <span class="emoji-icon">▶️</span>
+              Автоматизировать
+            </span>
+          </div>
+          <div class="plate-block">
+            <div class="block-caption">Меню статусов</div>
+            <div class="dropdown-mock">
+              <div class="dropdown-item">Автоматизировано с ИИ</div>
+              <div class="dropdown-item selected">
+                <span class="check">✓</span>
+                <span class="emoji-icon">▶️</span>
+                Автоматизировать
+              </div>
+              <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="plate-col-label good">Вариант</div>
+          <div class="plate-block">
+            <div class="block-caption">Чип в списке</div>
+            <span class="status-chip chip-indigo">
+              <img src="icons/status-automate-indigo-play-64.png" alt="">
+              Автоматизировать
+            </span>
+          </div>
+          <div class="plate-block">
+            <div class="block-caption">Меню статусов</div>
+            <div class="dropdown-mock">
+              <div class="dropdown-item">
+                <span class="spacer"></span>
+                <img src="icons/status-done-64.png" alt="">
+                Автоматизировано с ИИ
+              </div>
+              <div class="dropdown-item selected">
+                <span class="check">✓</span>
+                <img src="icons/status-automate-indigo-play-64.png" alt="">
+                Автоматизировать
+              </div>
+              <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hex">
+        <strong>Цвет статуса:</strong> #4338CA ·
+        <strong>Иконка:</strong> icons/status-automate-indigo-play-64.png ·
+        <strong>Название:</strong> Автоматизировать (без emoji)
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Все варианты — сейчас vs предложение</h2>
+    <div class="grid">
+
+      <div class="card recommended">
+        <div class="card-header">
+          <span class="card-title">A. Индиго (тональный)</span>
+          <span class="badge-rec">лучший</span>
+        </div>
+        <p class="card-desc">Нейтральный «инструмент», не кричит. Подходит для QA-команды.</p>
+        <div class="plate">
+          <div>
+            <div class="plate-col-label bad">Сейчас</div>
+            <div class="plate-block">
+              <div class="block-caption">Чип</div>
+              <span class="status-chip chip-current"><span class="emoji-icon">▶️</span>Автоматизировать</span>
+            </div>
+            <div class="plate-block">
+              <div class="block-caption">Меню</div>
+              <div class="dropdown-mock">
+                <div class="dropdown-item">Автоматизировано с ИИ</div>
+                <div class="dropdown-item selected"><span class="check">✓</span><span class="emoji-icon">▶️</span>Автоматизировать</div>
+                <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="plate-col-label good">Индиго</div>
+            <div class="plate-block">
+              <div class="block-caption">Чип</div>
+              <span class="status-chip chip-indigo"><img src="icons/status-automate-indigo-play-64.png" alt="">Автоматизировать</span>
+            </div>
+            <div class="plate-block">
+              <div class="block-caption">Меню</div>
+              <div class="dropdown-mock">
+                <div class="dropdown-item"><span class="spacer"></span><img src="icons/status-done-64.png" alt="">Автоматизировано с ИИ</div>
+                <div class="dropdown-item selected"><span class="check">✓</span><img src="icons/status-automate-indigo-play-64.png" alt="">Автоматизировать</div>
+                <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hex"><strong>#4338CA</strong> · status-automate-indigo-play-64.png</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">B. Slate (нейтральный)</span></div>
+        <p class="card-desc">Максимально сдержанно — цвет не отвлекает, смысл в иконке.</p>
+        <div class="plate">
+          <div>
+            <div class="plate-col-label bad">Сейчас</div>
+            <div class="plate-block">
+              <div class="block-caption">Чип</div>
+              <span class="status-chip chip-current"><span class="emoji-icon">▶️</span>Автоматизировать</span>
+            </div>
+            <div class="plate-block">
+              <div class="block-caption">Меню</div>
+              <div class="dropdown-mock">
+                <div class="dropdown-item">Автоматизировано с ИИ</div>
+                <div class="dropdown-item selected"><span class="check">✓</span><span class="emoji-icon">▶️</span>Автоматизировать</div>
+                <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="plate-col-label good">Slate</div>
+            <div class="plate-block">
+              <div class="block-caption">Чип</div>
+              <span class="status-chip chip-slate"><img src="icons/status-automate-slate-play-64.png" alt="">Автоматизировать</span>
+            </div>
+            <div class="plate-block">
+              <div class="block-caption">Меню</div>
+              <div class="dropdown-mock">
+                <div class="dropdown-item"><span class="spacer"></span><img src="icons/status-done-64.png" alt="">Автоматизировано с ИИ</div>
+                <div class="dropdown-item selected"><span class="check">✓</span><img src="icons/status-automate-slate-play-64.png" alt="">Автоматизировать</div>
+                <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hex"><strong>#475569</strong> · status-automate-slate-play-64.png</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">C. Бирюзовый</span></div>
+        <p class="card-desc">«Запустить действие» — чуть живее, но всё ещё деловой.</p>
+        <div class="plate">
+          <div>
+            <div class="plate-col-label bad">Сейчас</div>
+            <div class="plate-block">
+              <div class="block-caption">Чип</div>
+              <span class="status-chip chip-current"><span class="emoji-icon">▶️</span>Автоматизировать</span>
+            </div>
+            <div class="plate-block">
+              <div class="block-caption">Меню</div>
+              <div class="dropdown-mock">
+                <div class="dropdown-item">Автоматизировано с ИИ</div>
+                <div class="dropdown-item selected"><span class="check">✓</span><span class="emoji-icon">▶️</span>Автоматизировать</div>
+                <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="plate-col-label good">Teal</div>
+            <div class="plate-block">
+              <div class="block-caption">Чип</div>
+              <span class="status-chip chip-teal"><img src="icons/status-automate-teal-play-64.png" alt="">Автоматизировать</span>
+            </div>
+            <div class="plate-block">
+              <div class="block-caption">Меню</div>
+              <div class="dropdown-mock">
+                <div class="dropdown-item"><span class="spacer"></span><img src="icons/status-done-64.png" alt="">Автоматизировано с ИИ</div>
+                <div class="dropdown-item selected"><span class="check">✓</span><img src="icons/status-automate-teal-play-64.png" alt="">Автоматизировать</div>
+                <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hex"><strong>#0D9488</strong> · status-automate-teal-play-64.png</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">D. Янтарный</span></div>
+        <p class="card-desc">Заметный CTA — если статус должен явно звать к действию.</p>
+        <div class="plate">
+          <div>
+            <div class="plate-col-label bad">Сейчас</div>
+            <div class="plate-block">
+              <div class="block-caption">Чип</div>
+              <span class="status-chip chip-current"><span class="emoji-icon">▶️</span>Автоматизировать</span>
+            </div>
+            <div class="plate-block">
+              <div class="block-caption">Меню</div>
+              <div class="dropdown-mock">
+                <div class="dropdown-item">Автоматизировано с ИИ</div>
+                <div class="dropdown-item selected"><span class="check">✓</span><span class="emoji-icon">▶️</span>Автоматизировать</div>
+                <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="plate-col-label good">Amber</div>
+            <div class="plate-block">
+              <div class="block-caption">Чип</div>
+              <span class="status-chip chip-amber"><img src="icons/status-automate-amber-play-64.png" alt="">Автоматизировать</span>
+            </div>
+            <div class="plate-block">
+              <div class="block-caption">Меню</div>
+              <div class="dropdown-mock">
+                <div class="dropdown-item"><span class="spacer"></span><img src="icons/status-done-64.png" alt="">Автоматизировано с ИИ</div>
+                <div class="dropdown-item selected"><span class="check">✓</span><img src="icons/status-automate-amber-play-64.png" alt="">Автоматизировать</div>
+                <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hex"><strong>#B45309</strong> · status-automate-amber-play-64.png</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">E. Фиолетовый</span></div>
+        <p class="card-desc">Если хочется намёк на ИИ — но без градиентов и блёсток.</p>
+        <div class="plate">
+          <div>
+            <div class="plate-col-label bad">Сейчас</div>
+            <div class="plate-block">
+              <div class="block-caption">Чип</div>
+              <span class="status-chip chip-current"><span class="emoji-icon">▶️</span>Автоматизировать</span>
+            </div>
+            <div class="plate-block">
+              <div class="block-caption">Меню</div>
+              <div class="dropdown-mock">
+                <div class="dropdown-item">Автоматизировано с ИИ</div>
+                <div class="dropdown-item selected"><span class="check">✓</span><span class="emoji-icon">▶️</span>Автоматизировать</div>
+                <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="plate-col-label good">Violet</div>
+            <div class="plate-block">
+              <div class="block-caption">Чип</div>
+              <span class="status-chip chip-violet"><img src="icons/status-automate-violet-play-64.png" alt="">Автоматизировать</span>
+            </div>
+            <div class="plate-block">
+              <div class="block-caption">Меню</div>
+              <div class="dropdown-mock">
+                <div class="dropdown-item"><span class="spacer"></span><img src="icons/status-done-64.png" alt="">Автоматизировано с ИИ</div>
+                <div class="dropdown-item selected"><span class="check">✓</span><img src="icons/status-automate-violet-play-64.png" alt="">Автоматизировать</div>
+                <div class="dropdown-item"><span class="spacer"></span>Перегенерировать автотест</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hex"><strong>#6D28D9</strong> · status-automate-violet-play-64.png</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Иконки play (все цвета)</h2>
+    <div class="icon-row">
+      <div class="icon-cell"><img src="icons/status-automate-indigo-play-64.png" width="40" height="40"><span>indigo</span></div>
+      <div class="icon-cell"><img src="icons/status-automate-slate-play-64.png" width="40" height="40"><span>slate</span></div>
+      <div class="icon-cell"><img src="icons/status-automate-teal-play-64.png" width="40" height="40"><span>teal</span></div>
+      <div class="icon-cell"><img src="icons/status-automate-amber-play-64.png" width="40" height="40"><span>amber</span></div>
+      <div class="icon-cell"><img src="icons/status-automate-violet-play-64.png" width="40" height="40"><span>violet</span></div>
+      <div class="icon-cell"><img src="icons/status-done-64.png" width="40" height="40"><span>done ✓</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Настройка в TestOps</h2>
+    <div class="tips">
+      <ul>
+        <li><strong>Убрать ▶️</strong> из названия статуса — emoji ломает единый стиль.</li>
+        <li><strong>Иконка</strong> — PNG 64×64: <code>status-automate-indigo-play-64.png</code> (▶ запуск) или <code>-code-64.png</code> (&lt;/&gt; код). Рисовать тонкими линиями нельзя — на 16 px превращается в точку.</li>
+        <li><strong>Цвет</strong> — для доверия лучше индиго (#4338CA) или slate (#475569), не яркий голубой.</li>
+        <li><strong>«Автоматизировано с ИИ»</strong> — зелёный #15803D + иконка status-done-64.png.</li>
+        <li>Избегать градиентов и «магических» звёздочек — в enterprise UI это считывается как маркетинг, не инструмент.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

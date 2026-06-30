@@ -1,0 +1,19 @@
+[project]
+name = "qa-guru-tms-automator"
+version = "0.1.0"
+description = "Monitor Allure TestOps workflow statuses and automate manual test cases"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.0",
+    "pydantic-settings>=2.7.0",
+]
+
+[project.scripts]
+automator = "automator.main:main"
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

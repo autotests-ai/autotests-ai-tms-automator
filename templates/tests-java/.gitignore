@@ -1,0 +1,14 @@
+.gradle/
+build/
+.idea/
+.vscode/
+*.iml
+demo/
+
+# Frontend preview symlink (rule frontend-preview — не e2e config)
+app-path-local
+
+allure-results/
+bin/
+node_modules/
+package-lock.json

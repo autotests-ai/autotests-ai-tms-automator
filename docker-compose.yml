@@ -1,0 +1,14 @@
+services:
+  automator:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - automator-data:/app/data
+      - automator-projects:/app/projects
+      - ${HOME}/.config/gh:/root/.config/gh:ro
+    restart: unless-stopped
+
+volumes:
+  automator-data:
+  automator-projects:
