@@ -1,6 +1,7 @@
 from functools import lru_cache
+from pathlib import Path
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,12 +12,15 @@ class Settings(BaseSettings):
     allure_api_token: str
     allure_api_prefix: str = "/api/rs"
 
-    workflow_id: int = 4
+    workflow_id: int = 6
 
     status_draft_id: int = -1
-    status_review_id: int = -2
+    status_review_id: int = 14
     status_automate_id: int = 5
-    status_automated_ai_id: int = 13
+    status_automated_ai_id: int = Field(
+        default=-3,
+        validation_alias=AliasChoices("STATUS_AUTOMATED_DONE_ID", "STATUS_AUTOMATED_AI_ID"),
+    )
 
     poll_interval_sec: int = 30
     project_page_size: int = 100
@@ -32,9 +36,17 @@ class Settings(BaseSettings):
 
     github_org: str = "autotests-cloud"
     github_repo_public: bool = True
-    github_template_dir: str = "templates/project-tests"
+    github_template_dir: str = "templates/tests-java"
     github_projects_dir: str = "projects"
+    template_project_dir: str = "/Users/stanislav/template-project"
     automation_ci_timeout_sec: int = 900
+
+    def resolve_template_project_dir(self) -> Path:
+        return Path(self.template_project_dir)
+
+    def resolve_rag_canon_dir(self, repo_root: Path) -> Path:
+        """Vendored RAG inside automator — always read this path at runtime."""
+        return repo_root / "docs" / "rag"
 
 
 @lru_cache

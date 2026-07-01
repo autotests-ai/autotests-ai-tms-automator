@@ -28,12 +28,14 @@ class AutomationWorker:
         client: AllureTestOpsClient,
         project_repo: ProjectRepositoryService,
         github: GitHubClient,
+        rag_dir: Path,
     ) -> None:
         self._settings = settings
         self._store = store
         self._client = client
         self._project_repo = project_repo
         self._github = github
+        self._rag_dir = rag_dir
 
     def process_pending(self, limit: int = 5) -> int:
         processed = 0
@@ -82,7 +84,12 @@ class AutomationWorker:
             if repo_info.get("created"):
                 self._comment_repo_created(test_case_id, project_id, repo_name, repo_url)
 
-            generated = generate_test_java(test_case_id, test_case, step_bodies)
+            generated = generate_test_java(
+                test_case_id,
+                test_case,
+                step_bodies,
+                rag_dir=self._rag_dir,
+            )
             class_name, created_repo_info = self._project_repo.push_generated_test(
                 project_id,
                 repo_name,
@@ -143,7 +150,25 @@ class AutomationWorker:
             )
 
             if finished.conclusion == "success":
-                processing = "done"
+                processing = "failed"
+                try:
+                    finalized = self._client.finalize_automation_launch(project_id, test_case_id)
+                    if finalized:
+                        logger.info(
+                            "TestOps finalized for #%s: launch=%s automated=%s status=%s",
+                            test_case_id,
+                            finalized.get("launch_id"),
+                            finalized.get("automated"),
+                            finalized.get("status_id"),
+                        )
+                        processing = "done"
+                    else:
+                        logger.warning(
+                            "CI succeeded for #%s but TestOps launch was not finalized",
+                            test_case_id,
+                        )
+                except Exception:
+                    logger.exception("Failed to finalize TestOps launch for #%s", test_case_id)
             else:
                 processing = "failed"
 

@@ -47,12 +47,13 @@ def main() -> None:
         repo_root = Path(__file__).resolve().parents[2]
         template_dir = repo_root / settings.github_template_dir
         projects_dir = repo_root / settings.github_projects_dir
+        rag_canon_dir = settings.resolve_rag_canon_dir(repo_root)
         projects_dir.mkdir(parents=True, exist_ok=True)
         github = GitHubClient(settings.github_org, repo_public=settings.github_repo_public)
         project_repo = ProjectRepositoryService(
-            settings, store, client, github, template_dir, projects_dir
+            settings, store, client, github, template_dir, projects_dir, rag_canon_dir
         )
-        worker = AutomationWorker(settings, store, client, project_repo, github)
+        worker = AutomationWorker(settings, store, client, project_repo, github, rag_canon_dir)
 
         logger.info(
             "Watcher started. Poll interval=%ss, projects=%s, dry_run=%s, github_org=%s",

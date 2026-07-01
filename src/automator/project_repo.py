@@ -16,6 +16,7 @@ from automator.generator.java_tests import (
 from automator.generator.naming import TestNames
 from automator.generator.test_java import GeneratedTest, build_test_class_file
 from automator.github.client import GitHubClient
+from automator.rag.policy import load_generator_policy
 from automator.github.naming import build_repo_name
 from automator.storage.db import StateStore
 
@@ -31,6 +32,7 @@ class ProjectRepositoryService:
         github: GitHubClient,
         template_dir: Path,
         projects_dir: Path,
+        rag_canon_dir: Path,
     ) -> None:
         self._settings = settings
         self._store = store
@@ -38,6 +40,7 @@ class ProjectRepositoryService:
         self._github = github
         self._template_dir = template_dir
         self._projects_dir = projects_dir
+        self._rag_canon_dir = rag_canon_dir
 
     def project_workdir(self, repo_name: str) -> Path:
         return self._projects_dir / repo_name
@@ -62,7 +65,9 @@ class ProjectRepositoryService:
     def ensure_repository(self, project_id: int) -> dict[str, Any]:
         existing = self._store.get_project_repo(project_id)
         if existing and self._github.repo_exists(str(existing["repo_name"])):
-            self.ensure_local_project(str(existing["repo_name"]))
+            repo_name = str(existing["repo_name"])
+            self.ensure_local_project(repo_name)
+            self._github.ensure_github_pages(repo_name)
             return {**existing, "created": False}
 
         if existing:
@@ -75,6 +80,7 @@ class ProjectRepositoryService:
 
         if self._github.repo_exists(repo_name):
             self.ensure_local_project(repo_name)
+            self._github.ensure_github_pages(repo_name)
             repo_url = f"https://github.com/{self._settings.github_org}/{repo_name}"
             record = {
                 "project_id": project_id,
@@ -96,6 +102,7 @@ class ProjectRepositoryService:
             allure_endpoint=self._settings.allure_endpoint,
             allure_token=self._settings.allure_api_token,
             description=description,
+            rag_source=self._rag_canon_dir,
         )
         record = {
             "project_id": project_id,
@@ -152,6 +159,7 @@ class ProjectRepositoryService:
             step_bodies=generated.step_bodies,
             page_path=generated.page_path,
             tag=generated.tag,
+            policy=load_generator_policy(self._rag_canon_dir),
         )
         return names.relative_path, content, names, remove_paths
 

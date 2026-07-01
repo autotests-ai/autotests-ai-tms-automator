@@ -23,6 +23,7 @@ RUN apt-get update \
 COPY pyproject.toml ./
 COPY src ./src
 COPY templates ./templates
+COPY docs ./docs
 
 RUN python -m pip install --no-cache-dir .
 
