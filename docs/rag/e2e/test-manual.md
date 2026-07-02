@@ -15,7 +15,7 @@ tags: [allure, manual, testops]
 
 | Паттерн | Путь | Зачем |
 |---------|------|-------|
-| Exploratory (пирамида) | `tests-java/src/test/java/tests/LoginTests`, `HeaderTests` — методы с `@Manual` | Чеклист для ручного прогона в Allure; `@Layer("manual")` и `@Tag("manual")` на **методе**, класс остаётся `@Layer("e2e")` |
+| Exploratory (пирамида) | `tests-java/src/test/java/tests/LoginTests` — методы с `@Manual` | Чеклист для ручного прогона в Allure; `@Layer("manual")` и `@Tag("manual")` на **методе**, класс остаётся `@Layer("e2e")` |
 | TestOps import (ethalon) | `_ethalon/ladder/LoginTests.shortLoginAuthorizationTest` | `@AllureId`, только `Allure.step`, **без Selenide** — синх с TestOps |
 
 Аннотация: `annotations/Manual.java` → label `ALLURE_MANUAL=true`.
@@ -32,7 +32,7 @@ TestOps manual (RAG): шаги видны в отчёте без browser steps.
 
 ## Do
 
-- Exploratory — `@Manual` на методе в `LoginTests` / `HeaderTests`, не отдельный пакет `tests/manual/`.
+- Exploratory — `@Manual` на методе в `LoginTests`, не отдельный пакет `tests/manual/`.
 - TestOps manual — только ethalon (`_ethalon/ladder/`); не переносить `shortLoginAuthorizationTest` в `tests-java/LoginTests`.
 - Gradle manual layer: `-DincludeTags=manual`.
 

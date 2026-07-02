@@ -9,9 +9,11 @@ tags: [header, selenide]
 
 **id:** `hdr-behavior`
 
+> **Legacy reference:** harness PO удалён. Канон — embed `LoginEmbedTests` на `login.html`; component — `LangToggleTests`.
+
 ## Файлы
 
-`HeaderComponent, HeaderPreviewPage, HeaderTests`
+`LoginEmbedTests`, `LangToggleTests` (канон); legacy — `HeaderComponent`, `HeaderPreviewPage`, `HeaderTests`
 
 ## Входы
 

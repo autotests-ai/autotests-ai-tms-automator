@@ -111,7 +111,7 @@ Service repo после deploy → `repository_dispatch` type `deploy-smoke` →
 4. `executor.json` + `./gradlew allureReport`
 5. peaceiris/actions-gh-pages
 6. allurectl upload (+ close launch для app ethalon)
-7. Job summary (включая `QUALITY_GATE_EXIT`); fail при `TEST_EXIT≠0` или `QUALITY_GATE_EXIT≠0`
+7. Job summary — fail при `TEST_EXIT≠0` или `QUALITY_GATE_EXIT≠0` (app); orchestrator `report` job — отдельный fail step для gate
 
 Orchestrator delta: download-artifact merge (`allure-go-*` + `allure-java`).
 

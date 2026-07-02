@@ -11,7 +11,7 @@ tags: [selenide, junit, allure]
 
 ## Файлы
 
-`selenoid-*.properties` — см. таблицу env profiles в `e2e-config-keys.md`.
+`{stand-base}_*.properties` — см. таблицу env profiles в `e2e-config-keys.md`.
 
 ## Входы
 

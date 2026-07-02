@@ -7,7 +7,7 @@ tags: [structure, testbase, pages]
 ---
 # Слои e2e (stack-agnostic)
 
-Структура `tests-java/` — единый эталон для портирования на другие стеки. **Testing pyramid** (unit / component / integration / e2e / manual) — отдельный чанк `test-pyramid`.
+Структура `tests-java/` — единый эталон для портирования на другие стеки. **Testing pyramid** (`@Layer`: unit / component / integration / api / e2e / manual; CI slice `visual`) — чанк `test-pyramid`.
 
 ## Слои
 

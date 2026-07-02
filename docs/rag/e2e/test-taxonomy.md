@@ -23,7 +23,7 @@ Labels в отчёте
 
 ## Do
 
-smoke/positive/negative; epic One Page Form для login; `@Manual` exploratory — на **методе** в `LoginTests` / `HeaderTests`, `@Tag("manual")` (чанк `test-manual`); TestOps layer mapping — чанк `test-layers`
+smoke/positive/negative; epic One Page Form для login; `@Manual` exploratory — на **методе** в `LoginTests`, `@Tag("manual")` (чанк `test-manual`); TestOps layer mapping — чанк `test-layers`
 
 ## Don't
 

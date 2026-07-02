@@ -26,7 +26,7 @@ Owner merge (приоритет ↓): `system:properties` → `config/${env}.pro
 
 | Key | Default | Назначение |
 |-----|---------|------------|
-| `env` | `local` | `config/${env}.properties` |
+| `env` | `local_e2e` | `config/${env}.properties` (Gradle `defaultEnv`) |
 | `baseUrl` | `""` | HTTP(S) корень |
 | `basePath` | `""` | Локальная папка → `file://` |
 | `apiBaseUrl` | `""` | Rest Assured base URI; пустой → `hubUrl` |
@@ -57,11 +57,11 @@ Owner merge (приоритет ↓): `system:properties` → `config/${env}.pro
 | `playwrightEnableVnc` | `false` | VNC для Playwright-сессии |
 | `playwrightEnableVideo` | `false` | video для Playwright-сессии |
 
-Inbox ключей из consumer-репо (selenoid, selenoid-ui): `_new.properties` → merge в эталон. Selenide e2e-профили (`local`, `selenoid-*`) hub-ключи не задают — defaults из `TestConfig`.
+Inbox ключей из consumer-репо (selenoid, selenoid-ui): `_new.properties` → merge в эталон. Selenide e2e-профили (`local_*`, `selenoid_*`, …) hub-ключи не задают — defaults из `TestConfig`.
 
 ### Env profiles (`{stand-base}_{deployment}_{layer}`)
 
-Stand-only файлы **не используются**. Один файл = стенд × слой пирамиды.  
+Stand-only файлы **не используются**. Один файл = стенд × env suffix (`@Layer` или CI slice).  
 Сегменты разделяются `_`; внутри имени стенда допустимы `-` (напр. `selenoid-autotests-cloud`).
 
 `-Denv=<stand-base>_<deployment>_<layer>` → `config/<stand-base>_<deployment>_<layer>.properties`  
@@ -81,15 +81,15 @@ Stand-only файлы **не используются**. Один файл = с�
 | `selenoid-autotests-cloud_github` | cloud hub + CI attachments |
 | `selenoid-autotests-cloud_local` | cloud hub — local workstation |
 
-| Layer | Gradle slice | Tags |
-|-------|--------------|------|
+| Suffix | Gradle slice | Tags / примечание |
+|--------|--------------|-------------------|
 | `unit` | `./gradlew testUnit` | glob; auto skip health check |
 | `component` | `./gradlew testComponent` | `-DincludeTags=component` |
 | `integration` | `./gradlew testIntegration` | `-DincludeTags=layout,mount` |
 | `api` | `./gradlew testApi` | `-DincludeTags=api`; auto skip health check |
 | `e2e` | `./gradlew testE2e` | `-DincludeTags=smoke -DexcludeTags=visual` |
-| `visual` | `./gradlew testVisual` | `-DincludeTags=visual` |
-| `manual` | `./gradlew testManual` | `-DincludeTags=manual` |
+| `visual` | `./gradlew testVisual` | CI slice: `-DincludeTags=visual` (не `@Layer`) |
+| `manual` | `./gradlew testManual` | `-DincludeTags=manual`; `@Layer("manual")` на методе |
 
 Convenience tasks: ADR 005, `build.gradle` (`verification` group). Stand default `local`; override `-DpyramidStand=one-page-form_prod` → env `one-page-form_prod_e2e`. Эквивалент через `./gradlew test -Denv=…` сохранён.
 
@@ -187,7 +187,21 @@ npx allure agent query --from build/agent-output summary
 npx allure agent query --from build/agent-output tests --status failed
 ```
 
-Конфиг: `allurerc.json` (тот же, что для `./gradlew allureReport`). Skill (planned): `allure-agent-inspect`.
+Конфиг: `allurerc.json` (тот же, что для `./gradlew allureReport`). Skill: `allure-agent-inspect` (active).
+
+## Allure 3 quality gate
+
+Ортогонально JUnit exit: правила в `allurerc.json` → `qualityGate.rules`; known issues — `known.json`. Gradle task `allureQualityGate`; CI — до `allureReport`. RAG: `alr-quality-gate`.
+
+| Key / artifact | Default | Назначение |
+|----------------|---------|------------|
+| `qualityGate.rules` | `[{ "maxFailures": 0 }]` | в `allurerc.json` |
+| `knownIssuesPath` | `./known.json` | flaky / quarantine по `historyId` |
+| `./gradlew allureQualityGate` | — | `npx allure@3 quality-gate` на `build/allure-results` |
+
+Override rules — правка `allurerc.json` или `allurerc.mjs` для per-env / `successRate`. `fastFail` — только с `allure run`, не с Gradle `test`.
+
+Локальный hook (без отдельного шага): `-DallureQualityGate=true` — post-`test` / pyramid slices → `finalizedBy allureQualityGate`.
 
 ## Allure runtime
 

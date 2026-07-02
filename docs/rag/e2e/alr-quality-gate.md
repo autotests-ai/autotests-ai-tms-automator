@@ -11,7 +11,7 @@ tags: [allure, quality-gate, ci, analytics]
 
 ## Файлы
 
-`tests-java/allurerc.json` (`qualityGate`, `knownIssuesPath`), `tests-java/known.json`, Gradle task `allureQualityGate` в `build.gradle`, CI — `docs/rag/e2e/ci-workflow-ethalon.md`.
+SSOT структуры: `tests-java/_ethalon/allurerc.json`; runnable: `tests-java/allurerc.json` (`qualityGate`, `knownIssuesPath`). Sync: skill `sync-allurerc-ethalon`, RAG `alr-allurerc-ethalon`. `tests-java/known.json`, Gradle task `allureQualityGate` в `build.gradle`, CI — `docs/rag/e2e/ci-workflow-ethalon.md`.
 
 ## Входы
 
@@ -36,7 +36,7 @@ tags: [allure, quality-gate, ci, analytics]
 
 ## Do
 
-- Локально: `./gradlew test … && ./gradlew allureQualityGate` или `-DallureQualityGate=true` на `test`
+- Локально: `./gradlew test … && ./gradlew allureQualityGate` или `-DallureQualityGate=true` на `test` / pyramid slice
 - CI app ethalon: gate сразу после Java `test`, при наличии results
 - CI orchestrator: gate в job `report` после merge Go+Java artifacts, до `allureReport`
 - Flaky: добавить `historyId` в `known.json` (из `*-result.json` в `build/allure-results/`)

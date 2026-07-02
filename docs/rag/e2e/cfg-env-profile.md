@@ -15,7 +15,9 @@ tags: [selenide, junit, allure]
 
 ## Входы
 
--Denv=local-e2e
+`-Denv=local_e2e` → `config/local_e2e.properties`
+
+Именование: `{stand-base}_{deployment}_{suffix}.properties` — сегменты через `_`; дефис только внутри имени стенда (`one-page-form_prod_e2e`). Stand-only (`local.properties`, `ci.properties`) **не используются**.
 
 ## Assert
 

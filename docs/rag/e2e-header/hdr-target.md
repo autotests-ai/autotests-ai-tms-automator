@@ -11,7 +11,7 @@ tags: [header, selenide]
 
 ## Файлы
 
-`local-e2e.properties`, `local-visual.properties`
+`local_e2e.properties`, `local_visual.properties`
 
 ## Входы
 

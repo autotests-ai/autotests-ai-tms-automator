@@ -1,8 +1,17 @@
 # ADR 003: Header smoke e2e — scope, assertions, legacy audit
 
-**Статус:** принято  
+**Статус:** принято (scope shift 2026-07 — см. ниже)  
 **Дата:** 2026-06-30  
 **Связано:** ADR 002 (слои e2e), `docs/layout-standard.md`
+
+### Status update (2026-07)
+
+Канон CI **не** использует harness PO (`HeaderTests`, `HeaderPreviewPage`, `HeaderComponent`, `HeaderLayout`). Header покрыт:
+
+- **component** — `LangToggleTests` на `components.html`
+- **integration** — `LoginEmbedTests` на `login.html` (embed, фаза 6)
+
+`frontend/header.html` — preview/playground only. RAG scope: `hdr-scope-4b`. Структура ниже — historical reference для legacy audit.
 
 ## Контекст
 
@@ -19,7 +28,7 @@
 | Параметр | Канон |
 |----------|-------|
 | Target page | `frontend/header.html` (harness; gallery — `header-examples.html`) |
-| Target app root | `http://localhost:3000/` — сервер cwd = `frontend/` (см. `local-e2e.properties`) |
+| Target app root | `http://localhost:3000/` — сервер cwd = `frontend/` (см. `local_e2e.properties`) |
 | Breakpoint | **768px** — `docs/layout-standard.md` |
 | Viewports для smoke | **390**, **768**, **1280** (edge: 769 desktop, 768 mobile) |
 | Epic Allure | **`Template Header`** — не смешивать с `@Epic("One Page Form")` |
@@ -90,8 +99,8 @@ Screenshot helper (visual): `helpers/ScreenshotBaseline.java` — **общий**
 
 ### Config
 
-- Профиль `local-e2e` (и sibling layers): `baseUrl=http://localhost:3000/`, сервер cwd = `frontend/`.
-- Login и header: `./gradlew test -Denv=local-e2e -DincludeTags=smoke -DexcludeTags=visual`; PO — `open("/login.html")`, `open("/header.html")`.
+- Профиль `local_e2e` (и sibling suffixes): `baseUrl=http://localhost:3000/`, сервер cwd = `frontend/`.
+- Login и header: `./gradlew test -Denv=local_e2e -DincludeTags=smoke -DexcludeTags=visual`; PO — `open("/login.html")`, `open("/header.html")`.
 - Приоритет base URL — как в ADR 002 (`cfg-base-url`).
 
 ### Allure taxonomy

@@ -53,12 +53,12 @@ tags: [config, selenide, ...]
 | `test-pyramid` | [e2e/test-pyramid.md](e2e/test-pyramid.md) |
 | `test-layers` | [e2e/test-layers.md](e2e/test-layers.md) |
 | `test-api-layer` | [e2e/test-api-layer.md](e2e/test-api-layer.md) |
+| `test-components` | [e2e/test-components.md](e2e/test-components.md) |
 | `test-manual` | [e2e/test-manual.md](e2e/test-manual.md) |
 | `test-logout-flow` | [e2e/test-logout-flow.md](e2e/test-logout-flow.md) |
 | `gen-python-policy` | [e2e/gen-python-policy.md](e2e/gen-python-policy.md) + `gen-python-policy.json` |
 | `ci-workflow-ethalon` | [e2e/ci-workflow-ethalon.md](e2e/ci-workflow-ethalon.md) |
 | `ci-gradle-args` | [e2e/ci-gradle-args.md](e2e/ci-gradle-args.md) |
-| `alr-quality-gate` | [e2e/alr-quality-gate.md](e2e/alr-quality-gate.md) — `allureQualityGate`, `known.json`, CI enforcement |
 
 Канон CI: `tests-java/`. Workflow SSOT: `tests-java/.github/_ethalon/`; skill `sync-github-workflows-ethalon`. Учебная ladder: ethalon `tests-java/src/test/java/_ethalon/ladder/` + RAG `test-style-ladder`, `test-pyramid`.
 
@@ -82,16 +82,19 @@ tags: [config, selenide, ...]
 
 Новый e2e-паттерн → чанк + строка в `manifest.jsonl` + одна строка в ADR (id → path). Полный ADR переписывать не нужно.
 
-### Planned: e2e-analytics (фаза 7.analytics)
+### e2e-analytics (фазы 7.analytics + 8.analytics-grid — завершены)
 
-Чанки `alr-*` — после реализации фазы 7; домен `e2e-analytics` или подпапка `e2e/analytics/`:
+Чанки `alr-*` — домен `e2e-analytics`:
 
-| id (planned) | Содержание |
-|--------------|------------|
-| `alr-agent-mode` | `allure agent inspect/query`, когда agent vs raw JSON |
-| `alr-data-sources` | results, history, agent-output, known.json |
-| `alr-metrics-catalog` | Tier 1–3 метрики + формулы |
-| `alr-chart-matrix` | chart type → метрика (фаза 8) |
-| `alr-dashboard-layout` | сетка, linked filters, theme sync (фаза 8) |
-| `alr-native-vs-custom` | decision matrix Allure vs Highcharts |
-| `alr-hook-shell` | `allure-shell.js` iframe + custom panel |
+| id | Содержание | Статус |
+|----|------------|--------|
+| `alr-quality-gate` | `allureQualityGate`, `known.json`, CI enforcement | ✓ `e2e/alr-quality-gate.md` |
+| `alr-agent-mode` | `allure agent inspect/query`, когда agent vs raw JSON | ✓ `e2e/alr-agent-mode.md` |
+| `alr-data-sources` | results, history, agent-output, `analytics-index.json` | ✓ `e2e/alr-data-sources.md` |
+| `alr-metrics-catalog` | Tier 1–3 метрики + формулы | ✓ `e2e/alr-metrics-catalog.md` |
+| `alr-chart-matrix` | chart type → метрика | ✓ `e2e/alr-chart-matrix.md` |
+| `alr-dashboard-layout` | сетка harness, URL probe, linked filters | ✓ `e2e/alr-dashboard-layout.md` |
+| `alr-hook-shell` | `allure-shell.js` iframe + custom panel | ✓ `e2e/alr-hook-shell.md` |
+| `alr-grid-live` | DIY grid, SVG sparklines, live feed | ✓ `e2e/alr-grid-live.md` |
+
+План фазы 8: `docs/plans/8-analytics-grid.md` · skill `allure-dashboard-grid` (**active**). Follow-up: epic click-filter в harness.

@@ -18,7 +18,7 @@ Roadmap (`docs/CONTEXT.md`, `layout-standard.md`) упоминает **header sm
 1. **`tests-java/`** — единственный канон стиля и структуры e2e в template-project.
 2. **Target app:** `frontend/` — единый static root (`login.html`, `header.html`, …); prod `baseUrl` на GitHub Pages one-page-form.
 3. **Сценарии:** login e2e smoke в каноне; negative/ladder/logout patterns — ethalon `_ethalon/ladder/` + RAG (`test-style-ladder`, `test-logout-flow`, `test-negative`). Header smoke — **фаза 4b**, ADR `003`.
-4. **Testing pyramid (4.pyramid):** unit / component / integration / **api** / e2e / manual в `tests-java/` — чанки `test-pyramid`, `test-api-layer` (ADR 004).
+4. **Testing pyramid (4.pyramid):** `@Layer` unit / component / integration / api / e2e / manual + CI slices (`testVisual`, …) — чанки `test-pyramid`, `test-api-layer` (ADR 004, 005).
 
 ### Слои (stack-agnostic)
 
@@ -43,7 +43,7 @@ Local HTTP: сервер из **`frontend/`**, `baseUrl=http://localhost:3000/`.
 
 | Key | Default | Назначение |
 |-----|---------|------------|
-| `env` | `local` | Имя файла `config/${env}.properties` |
+| `env` | `local_e2e` | Имя файла `config/${env}.properties` (Gradle `defaultEnv`; формат `{stand-base}_{suffix}`) |
 | `baseUrl` | `""` | HTTP(S) корень приложения |
 | `basePath` | `""` | Локальная директория (file://) |
 | `browser` | `chrome` | Браузер Selenide |
@@ -64,7 +64,7 @@ Local HTTP: сервер из **`frontend/`**, `baseUrl=http://localhost:3000/`.
 
 **TestOps** (`ALLURE_ENDPOINT`, `ALLURE_TOKEN`, …) — env CI/runner и `allurectl`; в Java-тесты и `-D` не попадает; e2e-builder генерирует shell-блок `export ALLURE_*`.
 
-Override: `-Dkey=value` или `-Denv=selenoid-local`.
+Override: `-Dkey=value` или `-Denv=selenoid_local_e2e`.
 
 ## Паттерны (RAG)
 
@@ -99,7 +99,7 @@ Override: `-Dkey=value` или `-Denv=selenoid-local`.
 | Назначение | CI, bootstrap, pyramid | учебные паттерны для e2e-builder |
 | `LoginTests` | 1 smoke PO + `@Manual` exploratory | full style ladder + negative — `src/test/java/_ethalon/ladder/LoginTests.java` |
 | `LogoutTests` | — | form + localStorage fluent — `src/test/java/_ethalon/ladder/LogoutTests.java` |
-| Manual | `@Manual` на методе в `LoginTests`/`HeaderTests` exploratory | `shortLoginAuthorizationTest` TestOps — ethalon + чанк `test-manual` |
+| Manual | `@Manual` на методе в `LoginTests` exploratory | `shortLoginAuthorizationTest` TestOps — ethalon + чанк `test-manual` |
 | Gradle | `testE2e`, `./gradlew test` | `testLadderEthalon` only; `@Tag("ladder-ethalon")` excluded elsewhere; `@Tag("api")` → `testApi` only |
 
 ## Учебная градация в `LoginTests` (ethalon)

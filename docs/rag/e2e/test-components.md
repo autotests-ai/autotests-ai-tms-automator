@@ -19,7 +19,6 @@ related: [test-layers, test-pyramid]
 | `selenoid` | qa-guru/selenoid |
 | `selenoid-ui` | qa-guru/selenoid-ui |
 | `playwright-image` | qa-guru/playwright-image |
-| `webdriver-image` | qa-guru/webdriver-image |
 
 **Не путать** с Test Layer `component` → **Component Tests** (`@Layer("component")`).
 

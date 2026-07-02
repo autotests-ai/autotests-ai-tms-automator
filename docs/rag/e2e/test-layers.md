@@ -25,6 +25,8 @@ related: [test-pyramid]
 
 **Deprecated:** `UI Tests` (Allure default) — не назначать кейсам. Browser smoke → `e2e` / **E2E Tests**.
 
+**Не `@Layer`:** visual — `@Layer("e2e")` на классе + `@Tag("visual")` + env `*_visual` + `testVisual` (CI slice). Ключ `visual` не добавлять в таблицу `@Layer` и не в `testingPyramid.layers`.
+
 ## TestOps project setup
 
 1. **Admin** (`/admin/testlayer`): six layers above must exist (E2E / Component / Integration / Manual — custom).
@@ -47,10 +49,11 @@ API: `POST /api/testlayerschema` (key + testLayerId), `POST /api/testcaseupdates
 
 `annotations/Layer.java` → `@LabelAnnotation(name = "layer")`. Upload via `allurectl upload`; mapping resolves key → Test Layer.
 
-## Dashboard (Allure 3 local)
+## Allure report charts (Allure 3 local)
 
 `allurerc.json` / `allurerc.mjs` → `name`: **название отчёта/launch** = `{github-repo-slug} Tests` (напр. `template-project Tests`, `one-page-form-tests-java Tests`, `selenoid-tests Tests`) — **не** Test Layer и **не** `@Layer`.  
 `plugins.dashboard.options.reportName` → `{slug} Tests Dashboard`; `plugins.csv.options.fileName` → `{slug}.csv`.  
+`testingPyramid` — в `plugins.awesome.options.charts` (Awesome `#charts`) и в `plugins.dashboard.options.layout` (native dashboard iframe).  
 `testingPyramid.layers`: ключи `@Layer` (`unit`, `component`, `integration`, `api`, `e2e`, `manual`).
 
 ## GitHub Actions (consumer workflow)
@@ -70,7 +73,7 @@ Runnable-файл в consumer = имя ethalon (`selenoid-autotests-cloud_github
 
 ## Do
 
-- Новый автотест: `@Layer` по таблице; `@Tag` для CI slice (`smoke`, `api`, `visual`, `manual`).
+- Новый автотест: `@Layer` по таблице (без `visual`); `@Tag` для CI slice (`smoke`, `api`, `visual`, `manual`).
 - Ручной кейс TestOps: Test Layer = E2E Tests / Manual Tests / … по сценарию (не UI Tests).
 - Автоматизация manual → `@Layer("e2e")` (skill `automate-manual-test`).
 

@@ -17,12 +17,12 @@
 {"id": "test-pyramid", "path": "docs/rag/e2e/test-pyramid.md", "domain": "e2e", "phase": "4.pyramid", "tags": ["structure", "layer", "pyramid"]}
 {"id": "test-layers", "path": "docs/rag/e2e/test-layers.md", "domain": "e2e", "phase": "4.pyramid", "tags": ["layer", "pyramid", "testops", "allure"]}
 {"id": "test-api-layer", "path": "docs/rag/e2e/test-api-layer.md", "domain": "e2e", "phase": "4.pyramid", "tags": ["structure", "layer", "api", "rest-assured"]}
+{"id": "test-components", "path": "docs/rag/e2e/test-components.md", "domain": "e2e", "phase": "4.pyramid", "tags": ["component", "testops", "allure", "selenoid"]}
 {"id": "test-manual", "path": "docs/rag/e2e/test-manual.md", "domain": "e2e", "phase": "4.pyramid", "tags": ["manual", "testops", "allure"]}
 {"id": "test-logout-flow", "path": "docs/rag/e2e/test-logout-flow.md", "domain": "e2e", "phase": "4a", "tags": ["page_object", "logout"]}
 {"id": "gen-python-policy", "path": "docs/rag/e2e/gen-python-policy.md", "domain": "e2e", "phase": "4a", "tags": ["generator", "python", "config"]}
 {"id": "ci-workflow-ethalon", "path": "docs/rag/e2e/ci-workflow-ethalon.md", "domain": "e2e", "phase": "4a", "tags": ["config", "ci", "github-actions", "workflow"]}
 {"id": "ci-gradle-args", "path": "docs/rag/e2e/ci-gradle-args.md", "domain": "e2e", "phase": "4a", "tags": ["config", "ci", "github-actions", "gradle"]}
-{"id": "alr-quality-gate", "path": "docs/rag/e2e/alr-quality-gate.md", "domain": "e2e-analytics", "phase": "7.analytics", "tags": ["allure", "quality-gate", "ci"]}
 {"id": "hdr-scope-4b", "path": "docs/rag/e2e-header/hdr-scope-4b.md", "domain": "e2e-header", "phase": "4b", "tags": ["scope"]}
 {"id": "hdr-selectors", "path": "docs/rag/e2e-header/hdr-selectors.md", "domain": "e2e-header", "phase": "4b", "tags": ["selectors"]}
 {"id": "hdr-legacy-audit", "path": "docs/rag/e2e-header/hdr-legacy-audit.md", "domain": "e2e-header", "phase": "4b", "tags": ["legacy"]}
@@ -34,3 +34,12 @@
 {"id": "hdr-viewport", "path": "docs/rag/e2e-header/hdr-viewport.md", "domain": "e2e-header", "phase": "4b", "tags": ["pattern"]}
 {"id": "hdr-visual-opt", "path": "docs/rag/e2e-header/hdr-visual-opt.md", "domain": "e2e-header", "phase": "4.visual", "tags": ["pattern", "visual"]}
 {"id": "hdr-legacy-reject", "path": "docs/rag/e2e-header/hdr-legacy-reject.md", "domain": "e2e-header", "phase": "4b", "tags": ["pattern"]}
+{"id": "alr-quality-gate", "path": "docs/rag/e2e/alr-quality-gate.md", "domain": "e2e-analytics", "phase": "7.analytics", "tags": ["allure", "quality-gate", "ci"]}
+{"id": "alr-allurerc-ethalon", "path": "docs/rag/e2e/alr-allurerc-ethalon.md", "domain": "e2e-analytics", "phase": "7.analytics", "tags": ["allure", "config", "ethalon"]}
+{"id": "alr-agent-mode", "path": "docs/rag/e2e/alr-agent-mode.md", "domain": "e2e-analytics", "phase": "7.analytics", "tags": ["allure", "agent", "inspect", "analytics"]}
+{"id": "alr-hook-shell", "path": "docs/rag/e2e/alr-hook-shell.md", "domain": "e2e-analytics", "phase": "7.analytics", "tags": ["allure", "dashboard", "shell", "iframe"]}
+{"id": "alr-data-sources", "path": "docs/rag/e2e/alr-data-sources.md", "domain": "e2e-analytics", "phase": "7.analytics", "tags": ["allure", "analytics", "index"]}
+{"id": "alr-metrics-catalog", "path": "docs/rag/e2e/alr-metrics-catalog.md", "domain": "e2e-analytics", "phase": "7.analytics", "tags": ["allure", "metrics", "dashboard"]}
+{"id": "alr-chart-matrix", "path": "docs/rag/e2e/alr-chart-matrix.md", "domain": "e2e-analytics", "phase": "7.analytics", "tags": ["allure", "highcharts", "dashboard"]}
+{"id": "alr-dashboard-layout", "path": "docs/rag/e2e/alr-dashboard-layout.md", "domain": "e2e-analytics", "phase": "7.analytics", "tags": ["allure", "dashboard", "layout"]}
+{"id": "alr-grid-live", "path": "docs/rag/e2e/alr-grid-live.md", "domain": "e2e-analytics", "phase": "8.analytics-grid", "tags": ["allure", "dashboard", "grid", "sparklines", "live"]}

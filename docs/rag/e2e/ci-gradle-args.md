@@ -22,10 +22,10 @@ Merge: `-Dkey=value` (system properties) **перекрывает** значен
 
 ## Именование env-профилей
 
-Формат: **`{stand-base}_{deployment}_{layer}.properties`** (без deployment: `{stand}_{layer}`). Stand-only и `ci.properties` **не используются**.
+Формат: **`{stand-base}_{deployment}_{suffix}.properties`** (без deployment: `{stand-base}_{suffix}`). Суффикс = `@Layer` или CI slice (`visual`). Stand-only и `ci.properties` **не используются**.
 
-| Пример `-Denv=` | Pipeline | Слой |
-|-----------------|----------|------|
+| Пример `-Denv=` | Pipeline | Suffix |
+|-----------------|----------|--------|
 | `selenoid_github_e2e` | selenoid-home GHA | hub smoke |
 | `selenoid_github_integration` | selenoid-home GHA | hub integration |
 | `selenoid_jenkins_e2e` | selenoid-home Jenkins | hub smoke |
@@ -33,7 +33,7 @@ Merge: `-Dkey=value` (system properties) **перекрывает** значен
 | `selenoid-autotests-cloud_github_e2e` | tms-automator GHA | app e2e + attachments |
 | `selenoid-autotests-cloud_github_visual` | tms-automator nightly | baselines |
 
-Smoke — через `-DincludeTags=smoke`, не через имя слоя (слой = `e2e`).
+Smoke — через `-DincludeTags=smoke`, не через имя suffix (smoke = `e2e` + exclude `visual`).
 
 ## App e2e — `selenoid-autotests-cloud_github.yml`
 
@@ -67,7 +67,7 @@ Consumer reference: `qa-guru-home/selenoid-home/tests-java/.github/workflows/sel
 
 ## Don't
 
-- Stand-only profiles (`local.properties`, `selenoid-github.properties`).
+- Stand-only profiles (`local.properties`, `selenoid_github.properties`) — **не используются**; канон `{stand-base}_{layer}.properties`.
 - Общий `ci.properties` для разных pipeline.
 - Слой `e2e-smoke` в имени файла — smoke = tag.
 - Добавлять `-Dkey` в workflow без `@Key` в `TestConfig` (кроме Gradle-only таблицы выше).
