@@ -1,0 +1,23 @@
+---
+description: Breakpoint, tokens, проверка вёрстки frontend
+globs: templates/vanilla-ui/**/*.{css,html}
+alwaysApply: false
+---
+
+# Layout standard (frontend)
+
+Breakpoint **768px**: desktop `@media (min-width: 769px)`, mobile `@media (max-width: 768px)`. Новые breakpoints — только по запросу + ADR.
+
+**Запрет rem-скейла:** не менять `html { font-size }`, не `font-size`/`font-weight` в `@media` для видимого текста. Адаптив — layout: flex, gap, overflow, скрытие.
+
+Tokens из `templates/vanilla-ui/css/tokens.css`; без hex в компонентах без причины. Интерактив: `data-testid`.
+
+Shell: header `56px` (`--header-height`), content `min(1300px, calc(100% - 32px))`, padding `16px`.
+
+**Header inner:** `.header__inner` — flex + `gap: var(--space-4)`; горизонтальные промежутки между блоками header **только** через gap. Без `--header-*` margin tokens и без margin-left/right на секциях для spacing.
+
+**После CSS/HTML:** screenshot 390 / 768 / 1280px; resize через 768 — без скачка кегля. Header harness: `templates/vanilla-ui/header.html`; gallery: `header-examples.html`.
+
+Размеры компонентов: rule `component-sizes`, `docs/component-sizes.md`. Иконки — только `.icon` + `--icon-size-md`.
+
+Полная версия: `docs/layout-standard.md`.

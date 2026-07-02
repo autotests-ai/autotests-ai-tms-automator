@@ -1,0 +1,26 @@
+---
+description: Scope агента — один чат одна зона, лимиты diff, запреты
+alwaysApply: true
+---
+
+# Agent scope
+
+- **Один чат = одна зона:** header-блок / один компонент / один тест-класс / одна фаза. Только нужные файлы, без соседнего рефакторинга.
+- **Не выдумывать UI** — см. `compose-from-primitives.mdc`: примитивы только из каталога; составные элементы — после декомпозиции.
+
+**Запреты** (без явного разрешения):
+- Копировать монолитный header CSS из consumer-репо; sync-скрипты между репо для header HTML
+- Упрощать UI (языки, иконки, поля)
+- Массовый diff в consumer-репо из этого workspace
+- Коммиты `.env`, `build/`, `allure-results/`
+- React/Vue/build step без запроса + ADR
+
+| Тип правки | Лимит |
+|------------|-------|
+| Микро-правка UI | 1–2 файла, ≤15 строк CSS |
+| Header layout | `templates/vanilla-ui/css/header.css` + `templates/vanilla-ui/js/header.js` |
+| Новый компонент | `templates/vanilla-ui/css/<name>.css` + snippet в `templates/` |
+
+Layout сломан → откати, чини **одним** свойством. Не уверен → ADR в `docs/adr/` или спроси.
+
+Consumer-миграция: `docs/downstream-map.md`, отдельный чат/workspace.

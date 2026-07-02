@@ -1,12 +1,16 @@
 import json
 import logging
+import re
 import shutil
 import subprocess
 import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 from automator.errors import AutomationError, RepositoryNotFoundError
+from automator.github.template import prepare_bootstrap_workdir
+from automator.video import VideoCapture, find_selenoid_video_url, scan_tree_for_selenoid_video_url
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +80,54 @@ class GitHubClient:
         )
         return result.returncode == 0
 
+    def github_pages_enabled(self, repo_name: str) -> bool:
+        repo_full = f"{self._org}/{repo_name}"
+        result = subprocess.run(
+            ["gh", "api", f"repos/{repo_full}/pages"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return result.returncode == 0
+
+    def ensure_github_pages(self, repo_name: str) -> None:
+        """Enable GitHub Pages from gh-pages branch (idempotent)."""
+        repo_full = f"{self._org}/{repo_name}"
+        if self.github_pages_enabled(repo_name):
+            logger.debug("GitHub Pages already enabled for %s", repo_full)
+            return
+
+        result = self._run(
+            [
+                "gh",
+                "api",
+                "--method",
+                "POST",
+                f"repos/{repo_full}/pages",
+                "-f",
+                "build_type=legacy",
+                "-f",
+                "source[branch]=gh-pages",
+                "-f",
+                "source[path]=/",
+            ],
+            check=False,
+            action=f"enable GitHub Pages for {repo_full}",
+        )
+        if result.returncode == 0:
+            logger.info(
+                "Enabled GitHub Pages for %s → https://%s.github.io/%s/",
+                repo_full,
+                self._org,
+                repo_name,
+            )
+            return
+
+        detail = _command_detail(result).lower()
+        if "already exists" in detail or "already enabled" in detail:
+            return
+        _raise_command_failed(result, f"enable GitHub Pages for {repo_full}")
+
     def create_repo_from_template(
         self,
         repo_name: str,
@@ -85,6 +137,7 @@ class GitHubClient:
         allure_endpoint: str,
         allure_token: str,
         description: str,
+        rag_source: Path | None = None,
     ) -> str:
         repo_full = f"{self._org}/{repo_name}"
         repo_url = f"https://github.com/{repo_full}"
@@ -108,9 +161,7 @@ class GitHubClient:
             logger.info("Created GitHub repo %s", repo_url)
 
         workdir.parent.mkdir(parents=True, exist_ok=True)
-        if workdir.exists():
-            shutil.rmtree(workdir)
-        shutil.copytree(template_dir, workdir, dirs_exist_ok=True)
+        prepare_bootstrap_workdir(template_dir, workdir, rag_source=rag_source)
 
         self._run(["git", "init"], cwd=workdir, action="git init")
         self._run(["git", "branch", "-M", "main"], cwd=workdir, action="git branch -M main")
@@ -153,6 +204,7 @@ class GitHubClient:
             ["gh", "secret", "set", "ALLURE_TOKEN", "--body", allure_token, "-R", repo_full],
             action=f"gh secret set ALLURE_TOKEN for {repo_full}",
         )
+        self.ensure_github_pages(repo_name)
         return repo_url
 
     def clone_repo(self, repo_name: str, workdir: Path) -> None:
@@ -208,7 +260,8 @@ class GitHubClient:
             if full_path.exists():
                 full_path.unlink()
             self._run(["git", "add", path], cwd=workdir, action=f"git add {path}")
-        self._run(["git", "commit", "-m", message], cwd=workdir, action="git commit")
+        commit_message = message if "[skip ci]" in message.lower() else f"{message}\n\n[skip ci]"
+        self._run(["git", "commit", "-m", commit_message], cwd=workdir, action="git commit")
         self._run(["git", "push", "origin", "main"], cwd=workdir, action=f"git push to {repo_full}")
 
     def dispatch_workflow(
@@ -218,26 +271,47 @@ class GitHubClient:
         test_case_id: int | None = None,
     ) -> WorkflowRunInfo:
         repo_full = f"{self._org}/{repo_name}"
-        cmd = ["gh", "workflow", "run", "ui-tests.yml", "-R", repo_full]
+        cmd = ["gh", "workflow", "run", "selenoid-autotests-cloud_github.yml", "-R", repo_full]
         if test_class:
             cmd.extend(["-f", f"test_class={test_class}"])
         if test_case_id is not None:
             cmd.extend(["-f", f"test_case_id={test_case_id}"])
-        self._run(cmd, action=f"gh workflow run ui-tests.yml for {repo_full}")
+        self._run(cmd, action=f"gh workflow run selenoid-autotests-cloud_github.yml for {repo_full}")
 
-        result = self._run(
-            ["gh", "run", "list", "--workflow", "ui-tests.yml", "-R", repo_full, "--limit", "1", "--json", "databaseId,url,status,conclusion"],
-            action=f"gh run list for {repo_full}",
-        )
-        runs = json.loads(result.stdout)
-        run = runs[0]
-        return WorkflowRunInfo(
-            run_id=int(run["databaseId"]),
-            run_url=run["url"],
-            status=run["status"],
-            conclusion=run.get("conclusion"),
-            report_url=None,
-        )
+        list_cmd = [
+            "gh",
+            "run",
+            "list",
+            "--workflow",
+            "selenoid-autotests-cloud_github.yml",
+            "-R",
+            repo_full,
+            "--event",
+            "workflow_dispatch",
+            "--limit",
+            "1",
+            "--json",
+            "databaseId,url,status,conclusion",
+        ]
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            result = self._run(
+                list_cmd,
+                action=f"gh run list for {repo_full}",
+            )
+            runs = json.loads(result.stdout)
+            if runs and runs[0].get("status") in {"queued", "in_progress", "completed", "waiting"}:
+                run = runs[0]
+                return WorkflowRunInfo(
+                    run_id=int(run["databaseId"]),
+                    run_url=run["url"],
+                    status=run["status"],
+                    conclusion=run.get("conclusion"),
+                    report_url=None,
+                )
+            time.sleep(2)
+
+        raise AutomationError(f"Timed out waiting for workflow_dispatch run in {repo_full}")
 
     def wait_for_run(self, repo_name: str, run_id: int, timeout_sec: int = 900) -> WorkflowRunInfo:
         repo_full = f"{self._org}/{repo_name}"
@@ -262,19 +336,53 @@ class GitHubClient:
             report_url=report_url,
         )
 
-    def download_video_artifact(self, repo_name: str, run_id: int, destination: Path) -> Path | None:
+    def extract_selenoid_video_url_from_run_log(self, repo_name: str, run_id: int) -> str | None:
         repo_full = f"{self._org}/{repo_name}"
+        result = subprocess.run(
+            ["gh", "run", "view", str(run_id), "-R", repo_full, "--log"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if result.returncode != 0:
+            return None
+        log_text = result.stdout or result.stderr or ""
+        url = find_selenoid_video_url(log_text)
+        if url:
+            return url
+        for line in log_text.splitlines():
+            if "VIDEO_URL=" not in line:
+                continue
+            match = re.search(r"VIDEO_URL=(https://[^\s]+)", line)
+            if match:
+                return match.group(1).rstrip("`")
+        return None
+
+    def download_video_artifact(
+        self,
+        repo_name: str,
+        run_id: int,
+        destination: Path,
+    ) -> VideoCapture:
+        repo_full = f"{self._org}/{repo_name}"
+        selenoid_url = self.extract_selenoid_video_url_from_run_log(repo_name, run_id)
         with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
             result = subprocess.run(
                 ["gh", "run", "download", str(run_id), "-R", repo_full, "-D", tmp],
                 check=False,
                 capture_output=True,
                 text=True,
             )
-            if result.returncode != 0:
-                return None
-            for mp4 in Path(tmp).rglob("*.mp4"):
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy(mp4, destination)
-                return destination
-        return None
+            if result.returncode == 0:
+                selenoid_url = selenoid_url or scan_tree_for_selenoid_video_url(tmp_path)
+                for mp4 in tmp_path.rglob("*.mp4"):
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(mp4, destination)
+                    return VideoCapture(
+                        path=destination,
+                        selenoid_url=selenoid_url,
+                        attachment_name=mp4.name,
+                    )
+        return VideoCapture(path=None, selenoid_url=selenoid_url)

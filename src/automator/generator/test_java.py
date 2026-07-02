@@ -37,6 +37,18 @@ def _extract_page_path(steps: list[str], policy: GeneratorPolicy) -> str:
     return policy.default_page_path
 
 
+def _is_submit_button_step(body: str, submit_testid: str) -> bool:
+    lowered = body.lower()
+    return (
+        submit_testid in body
+        or f"data-testid={submit_testid}" in lowered
+        or "submit-button" in lowered
+        or (submit_testid.replace("-", "_") in lowered)
+        or ("кнопку" in lowered and "submit" in lowered)
+        or ("нажать" in lowered and "submit" in lowered)
+    )
+
+
 def _build_step_blocks(
     step_bodies: list[str],
     page_constant: str,
@@ -78,7 +90,7 @@ def _build_step_blocks(
                 f'        step("{escaped}", () ->\n'
                 f'                $("[data-testid=login-link]").click());'
             )
-        elif submit_testid in body or f"data-testid={submit_testid}" in lowered or "кнопку" in lowered:
+        elif _is_submit_button_step(body, submit_testid):
             step_blocks.append(
                 f'        step("{escaped}", () ->\n'
                 f'                $("[data-testid={submit_testid}]").click());'

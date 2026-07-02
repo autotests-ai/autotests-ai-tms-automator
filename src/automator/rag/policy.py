@@ -57,7 +57,7 @@ class GeneratorPolicy:
                     "error": "error_message",
                 },
                 "assert_keywords": {
-                    "welcome": ["привет", "welcome", "logged-in", "logged in"],
+                    "welcome": ["привет", "welcome", "logged-in", "logged in", "success-panel"],
                     "error": [],
                 },
             }

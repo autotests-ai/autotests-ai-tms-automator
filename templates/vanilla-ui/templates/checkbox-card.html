@@ -1,0 +1,60 @@
+<!-- templates/checkbox-card.html — вставить в .section__body.stack.stack--sm -->
+<div class="checkbox-group" data-testid="checkbox-group-default">
+  <h3 class="checkbox-group__title">Default</h3>
+  <div class="stack stack--sm">
+    <label class="checkbox-card" data-testid="checkbox-card-a">
+      <input
+        type="checkbox"
+        class="checkbox__input"
+        name="checkbox-card-demo"
+        value="a"
+        data-testid="checkbox-card-input-a"
+        checked
+      >
+      <div class="checkbox-card__body stack stack--sm">
+        <div class="stack stack--sm stack--row">
+          <span>Option A</span>
+          <span class="badge">v1</span>
+        </div>
+        <p>Краткое описание первого варианта.</p>
+      </div>
+    </label>
+    <label class="checkbox-card" data-testid="checkbox-card-b">
+      <input
+        type="checkbox"
+        class="checkbox__input"
+        name="checkbox-card-demo"
+        value="b"
+        data-testid="checkbox-card-input-b"
+      >
+      <div class="checkbox-card__body stack stack--sm">
+        <div class="stack stack--sm stack--row">
+          <span>Option B</span>
+          <span class="badge">v2</span>
+        </div>
+        <p>Краткое описание второго варианта.</p>
+      </div>
+    </label>
+  </div>
+</div>
+<div class="checkbox-group" data-testid="checkbox-group-optional">
+  <h3 class="checkbox-group__title">Optional</h3>
+  <div class="stack stack--sm">
+    <label class="checkbox-card checkbox-card--muted" data-testid="checkbox-card-c">
+      <input
+        type="checkbox"
+        class="checkbox__input"
+        name="checkbox-card-demo"
+        value="c"
+        data-testid="checkbox-card-input-c"
+      >
+      <div class="checkbox-card__body stack stack--sm">
+        <div class="stack stack--sm stack--row">
+          <span>Option C</span>
+          <span class="badge">beta</span>
+        </div>
+        <p>Дополнительный вариант с модификатором muted.</p>
+      </div>
+    </label>
+  </div>
+</div>

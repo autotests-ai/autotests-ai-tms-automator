@@ -1,0 +1,193 @@
+@import url("tokens.css");
+
+.prompt-builder {
+  max-width: min(var(--content-max-width), calc(100% - 2 * var(--page-padding-x)));
+  margin: 0 auto;
+  padding: var(--space-6) var(--page-padding-x) var(--space-8);
+}
+
+.prompt-builder__intro {
+  margin-bottom: var(--space-6);
+}
+
+.prompt-builder__title {
+  margin: 0 0 var(--space-2);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.prompt-builder__lead {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.prompt-builder__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .prompt-builder__layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.prompt-builder__panel-title {
+  margin: 0 0 var(--space-3);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.prompt-builder__phrases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.prompt-builder__phrase {
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+
+.prompt-builder__phrase:hover {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface-soft));
+}
+
+.prompt-builder__phrase:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.prompt-builder__skill-group {
+  margin-bottom: var(--space-4);
+}
+
+.prompt-builder__skill-group:last-child {
+  margin-bottom: 0;
+}
+
+.prompt-builder__skill-group-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.prompt-builder__skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.prompt-builder__skill {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.prompt-builder__skill:hover {
+  border-color: color-mix(in srgb, var(--color-border) 50%, var(--color-primary));
+}
+
+.prompt-builder__skill:has(.prompt-builder__skill-input:checked) {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+}
+
+.prompt-builder__skill--planned {
+  opacity: 0.65;
+}
+
+.prompt-builder__skill-input {
+  margin-top: 3px;
+  accent-color: var(--color-primary);
+}
+
+.prompt-builder__skill-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.prompt-builder__skill-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 500;
+}
+
+.prompt-builder__skill-when {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.prompt-builder__rules-always {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.prompt-builder__rule-hint {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+@media (min-width: 769px) {
+  .prompt-builder__sticky-panel {
+    position: sticky;
+    top: var(--space-6);
+    max-height: calc(100vh - 2 * var(--space-6));
+    overflow: auto;
+  }
+}
+
+.prompt-builder__output {
+  min-height: 280px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.prompt-builder__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.prompt-builder__copy-status {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  min-height: 1.5em;
+}
+
+.prompt-builder__back {
+  display: inline-block;
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.prompt-builder__back:hover {
+  color: var(--color-primary);
+}

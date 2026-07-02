@@ -6,19 +6,36 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        populate_by_name=True,
+    )
 
     allure_endpoint: str = "https://allure.autotests.cloud"
     allure_api_token: str
     allure_api_prefix: str = "/api/rs"
 
     workflow_id: int = 6
+    automated_workflow_id: int = Field(
+        default=5,
+        validation_alias=AliasChoices("AUTOMATED_WORKFLOW_ID"),
+    )
 
     status_draft_id: int = -1
     status_review_id: int = 14
     status_automate_id: int = 5
+    status_ai_automating_id: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("STATUS_AI_AUTOMATING_ID"),
+    )
+    status_ai_failed_id: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("STATUS_AI_FAILED_ID"),
+    )
     status_automated_ai_id: int = Field(
-        default=-3,
+        default=13,
         validation_alias=AliasChoices("STATUS_AUTOMATED_DONE_ID", "STATUS_AUTOMATED_AI_ID"),
     )
 

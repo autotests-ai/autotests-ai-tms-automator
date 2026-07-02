@@ -1,0 +1,64 @@
+---
+description: Отладочный прогон Java e2e — headless, 3 потока, reuse браузера
+globs: templates/tests-java/**
+alwaysApply: false
+---
+
+# E2e debug run
+
+Когда агент запускает e2e в `templates/tests-java/` **в ходе отладки** (не CI, не финальный smoke перед PR), используй этот профиль.
+
+## Обязательные флаги
+
+| Параметр | Значение |
+|----------|----------|
+| headless | `true` |
+| parallelism | `3` |
+| closeBrowserAfterEach | `false` |
+
+Между тестами `TestBase` сбрасывает cookies/storage (`BrowserSessionHelper.resetPageState`), а не вызывает `closeWebDriver()`.
+
+## Команда
+
+Из каталога `templates/tests-java/` (HTTP server из `templates/vanilla-ui/`):
+
+```bash
+gradle test \
+  -Dheadless=true \
+  -DcloseBrowserAfterEach=false \
+  -Djunit.jupiter.execution.parallel.config.fixed.parallelism=3 \
+  -Denv=<profile> \
+  --tests 'tests.<ClassName>'
+```
+
+Примеры:
+
+```bash
+# header smoke (http.server 3000 из templates/vanilla-ui/)
+gradle test -Denv=local --tests 'tests.HeaderTests' \
+  -Dheadless=true -DcloseBrowserAfterEach=false \
+  -Djunit.jupiter.execution.parallel.config.fixed.parallelism=3
+
+# login
+gradle test -Denv=local --tests 'tests.LoginTests' \
+  -Dheadless=true -DcloseBrowserAfterEach=false \
+  -Djunit.jupiter.execution.parallel.config.fixed.parallelism=3
+
+# visual baselines (compare; для перезаписи эталонов — `-DupdateBaselines=true`)
+gradle test -Denv=local -DincludeTags=visual \
+  -Dheadless=true -DcloseBrowserAfterEach=false \
+  -Djunit.jupiter.execution.parallel.config.fixed.parallelism=3
+```
+
+## Не делать при отладке
+
+- Не менять `junit-platform.properties` и env-профили ради одного прогона — только `-D` overrides.
+- Не включать VNC, video, HAR без явного запроса пользователя.
+- **Один прогон — один стенд:** не переключать `baseUrl` / HTTP↔`file://` внутри suite; другой target — отдельная команда `gradle test`.
+
+## Ограничения
+
+- Default parallelism в `junit-platform.properties` — `1`; для отладки всегда переопределяй через `-D`.
+- `HeaderTests` — `@Execution(SAME_THREAD)`: методы внутри класса последовательны; 3 потока дают выигрыш при прогоне suite или нескольких классов.
+
+Канон конфига: ADR 002, `docs/rag/e2e/e2e-config-keys.md`.

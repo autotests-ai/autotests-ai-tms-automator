@@ -1,0 +1,33 @@
+.section {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+}
+
+.section__title {
+  margin: 0 0 var(--space-2);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.section__desc {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.section__body {
+  margin: 0;
+}
+
+@media (min-width: 769px) {
+  .section--sticky {
+    position: sticky;
+    top: var(--space-6);
+    max-height: calc(100vh - 2 * var(--space-6));
+    overflow: auto;
+  }
+}

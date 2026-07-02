@@ -1,0 +1,23 @@
+---
+description: Утверждённые размеры компонентов — tokens, инварианты
+globs: templates/vanilla-ui/**/*.{css,html}
+alwaysApply: false
+---
+
+# Component sizes
+
+Канон: `docs/component-sizes.md`. Токены в `tokens.css`:
+
+- `--control-height-md: 36px` — btn, icon-btn, input
+- `--icon-size-md: 18px` — все `.icon`; SVG **без** своих width/height
+- `--input-min-width: 200px`
+
+**Запрет:** копировать произвольные `18`/`20` из сторонних SVG. Разный viewBox — ок; визуальный размер — только через `.icon`.
+
+**Ряд однотипных controls** (header tools): один hit area, один `--icon-size-md`.
+
+**Lang toggle** — составной примитив (`lang-toggle.css`): icon-btn 36×36 + label overlay. Не исключение из таблицы.
+
+**Header spacing** — только `gap` на `.header__inner`; без `--header-*` margin tokens.
+
+Новый примитив → таблица в `component-sizes.md` + секция в `components.html` + `templates/<name>.html`.

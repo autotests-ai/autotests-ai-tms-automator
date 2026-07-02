@@ -1,0 +1,15 @@
+---
+description: Микроправки UI — лимиты diff
+globs: templates/vanilla-ui/**
+alwaysApply: false
+---
+
+# Component edit
+
+Микроправка = 1–2 файла, ≤15 строк CSS. Не трогать соседние компоненты.
+
+Размеры — только токены из `component-sizes` rule; не хардкодить px на SVG.
+
+Новый компонент → skill `add-component`. Проверка → skill `playground-verify`; preview → rule `frontend-preview` (`file://` через `templates/tests-java/app-path-local/`, без сервера и без `:3000` в чате).
+
+Header layout/spacing → skill `header-layout`. Header config → skill `header-config`. Lang-toggle → `lang-toggle.css`.

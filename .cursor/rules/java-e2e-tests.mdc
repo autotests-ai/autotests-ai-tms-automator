@@ -1,6 +1,6 @@
 ---
 description: Java Selenide e2e conventions — etalon and generated tests in GitHub project repos
-globs: projects/**/*.java,tests-java/**/*.java,templates/project-tests/**/*.java
+globs: projects/**/*.java,templates/tests-java/**/*.java
 alwaysApply: false
 ---
 
@@ -9,9 +9,10 @@ alwaysApply: false
 Each Allure TestOps project gets its own GitHub repo:  
 `https://github.com/autotests-cloud/{project-name}-{projectId}`
 
-**Эталон (разработка):** `tests-java/` — образец стиля (`LoginTests.java`), не копируется в project repo.
-
-**Шаблон (bootstrap):** `templates/project-tests/` — только инфраструктура, без тестовых классов.
+**Эталон (разработка):** `templates/tests-java/` — pyramid, PO, visual, header; RAG `docs/rag/`.  
+**GitHub bootstrap:** trim из `templates/tests-java/` через `prepare_bootstrap_workdir()` — infra без e2e test classes.  
+**RAG:** rule `rag-retrieval.mdc` — vendored `docs/rag/`.  
+**Static UI (local):** `templates/vanilla-ui/` + `python -m http.server 3000`.
 
 Local working copy per project: `projects/{repo_name}/`
 
@@ -36,10 +37,17 @@ projects/{repo_name}/src/test/java/tests/
 - Package `tests`, class extends `TestBase`
 - `@AllureId("{testOpsId}")` on `@Test`
 - `@DisplayName` на классе — фича; на методе — название кейса из TestOps
-- Follow `tests-java/.../LoginTests.java` for steps and `[data-testid=…]`
-- Workflow skill: `qa-guru-home/.cursor/skills/automate-manual-test/SKILL.md`
+- Generated: `step()` + `[data-testid=…]` (Python generator)
+- Etalon PO: `templates/tests-java/.../LoginTests.java`, `pages/LoginPage.java`
+- Workflow skill: `.cursor/skills/automate-manual-test/SKILL.md`
 
 ## CI
 
-GitHub Actions: `./gradlew test --tests tests.LoginTests.successfulAuthorizationTest` для одного кейса.  
-Allure 3 report: `https://autotests-cloud.github.io/{repo}/reports/{run_id}/awesome/index.html`
+GitHub Actions: `templates/tests-java/.github/workflows/selenoid-autotests-cloud_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`)
+
+```bash
+./gradlew test --tests tests.LoginTests.successfulAuthorizationTest -Denv=ci
+```
+
+Allure 3 report: `https://autotests-cloud.github.io/{repo}/reports/{run_id}/awesome/index.html`  
+TestOps upload: `allurectl` при `ALLURE_PROJECT_ID` + `ALLURE_TOKEN`.

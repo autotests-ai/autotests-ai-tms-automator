@@ -1,0 +1,21 @@
+---
+description: Карта qa-guru-tms-automator — генератор e2e + vanilla UI
+alwaysApply: true
+---
+
+# qa-guru-tms-automator
+
+TestOps → GitHub `autotests-cloud/{name}-{id}` → Selenoid CI → Allure 3 + allurectl.
+
+| Зона | Путь |
+|------|------|
+| E2e эталон | `templates/tests-java/` — bootstrap SSOT |
+| Static UI | `templates/vanilla-ui/` — login/header harness |
+| RAG (vendored) | `docs/rag/` — sync `scripts/sync_rag_from_template_project.py` |
+| Generator | `src/automator/` |
+| Local projects | `projects/{repo_name}/` |
+
+Skills **только здесь:** `automate-manual-test`, `bootstrap-project-repo` (не дублировать в `qa-guru-home/.cursor/skills/`).
+Локальный smoke: `templates/vanilla-ui` HTTP `:3000` + `templates/tests-java` `-DincludeTags=smoke -DexcludeTags=visual`.
+
+Запреты: не пушить полный эталонный suite в consumer — trim bootstrap + сгенерированные тесты; не коммитить `build/`, `projects/`, `.env`.

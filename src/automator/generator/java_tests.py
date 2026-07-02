@@ -88,6 +88,36 @@ def append_method(content: str, method_block: str) -> str:
     return f"{trimmed[:-1]}\n\n{method_block}\n}}\n"
 
 
+_STATIC_IMPORTS_BY_NEEDLE: tuple[tuple[str, str], ...] = (
+    ("fail(", "import static com.codeborne.selenide.Selenide.fail;"),
+    ("not(cssClass", "import static com.codeborne.selenide.Condition.not;"),
+    ("cssClass(", "import static com.codeborne.selenide.Condition.cssClass;"),
+)
+
+
+def ensure_static_imports(content: str, *sources: str) -> str:
+    combined = "".join(sources)
+    missing = [
+        import_line
+        for needle, import_line in _STATIC_IMPORTS_BY_NEEDLE
+        if needle in combined and import_line not in content
+    ]
+    if not missing:
+        return content
+
+    lines = content.splitlines(keepends=True)
+    insert_at = 0
+    for index, line in enumerate(lines):
+        if line.startswith("import static"):
+            insert_at = index + 1
+        elif line.startswith("@") or line.startswith("public class"):
+            break
+    for import_line in missing:
+        lines.insert(insert_at, f"{import_line}\n")
+        insert_at += 1
+    return "".join(lines)
+
+
 def resolve_target_class(
     existing: list[ExistingTestClass],
     names: TestNames,

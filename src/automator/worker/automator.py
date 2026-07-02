@@ -15,6 +15,7 @@ from automator.testops_comments import (
     ci_started_comment,
     repo_created_comment,
     test_pushed_comment,
+    video_run_comment,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,6 +68,19 @@ class AutomationWorker:
         self._store.set_processing(project_id, test_case_id, "failed")
         self._store.finish_job(job_id, "failed", message)
         self._comment(test_case_id, comment)
+        try:
+            test_case = self._client.mark_automation_failed_status(test_case_id)
+            if test_case is not None:
+                status = test_case.get("status") or {}
+                self._store.upsert_state(
+                    project_id=project_id,
+                    test_case_id=test_case_id,
+                    status_id=int(status.get("id", self._settings.status_automate_id)),
+                    last_modified=int(test_case.get("lastModifiedDate", 0)),
+                    processing="failed",
+                )
+        except Exception:
+            logger.exception("Failed to mark #%s as automation failed in TestOps", test_case_id)
 
     def _run_job(self, job_id: int, project_id: int, test_case_id: int) -> None:
         self._store.set_processing(project_id, test_case_id, "running")
@@ -126,18 +140,33 @@ class AutomationWorker:
                 timeout_sec=self._settings.automation_ci_timeout_sec,
             )
 
-            video_attached = False
+            video_attachment_name: str | None = None
+            video_selenoid_url: str | None = None
             with tempfile.TemporaryDirectory() as tmp:
                 video_path = Path(tmp) / f"test-case-{test_case_id}.mp4"
-                downloaded = self._github.download_video_artifact(repo_name, run.run_id, video_path)
-                if downloaded and downloaded.exists():
-                    self._client.upload_test_case_attachment(
+                capture = self._github.download_video_artifact(repo_name, run.run_id, video_path)
+                video_selenoid_url = capture.selenoid_url
+                if capture.path and capture.path.exists():
+                    uploaded = self._client.upload_test_case_attachment(
                         test_case_id=test_case_id,
                         filename=f"test-case-{test_case_id}.mp4",
-                        content=downloaded.read_bytes(),
+                        content=capture.path.read_bytes(),
                         content_type="video/mp4",
                     )
-                    video_attached = True
+                    video_attachment_name = (
+                        str((uploaded or {}).get("name") or f"test-case-{test_case_id}.mp4")
+                    )
+
+            attachments_tab_url = self._client.test_case_attachments_tab_url(project_id, test_case_id)
+            if video_selenoid_url or video_attachment_name:
+                self._comment(
+                    test_case_id,
+                    video_run_comment(
+                        video_selenoid_url=video_selenoid_url,
+                        video_attachment_name=video_attachment_name,
+                        video_attachments_tab_url=attachments_tab_url,
+                    ),
+                )
 
             self._comment(
                 test_case_id,
@@ -145,7 +174,9 @@ class AutomationWorker:
                     run_url=finished.run_url,
                     report_url=finished.report_url,
                     conclusion=finished.conclusion,
-                    video_attached=video_attached,
+                    video_selenoid_url=video_selenoid_url,
+                    video_attachment_name=video_attachment_name,
+                    video_attachments_tab_url=attachments_tab_url,
                 ),
             )
 
@@ -171,6 +202,19 @@ class AutomationWorker:
                     logger.exception("Failed to finalize TestOps launch for #%s", test_case_id)
             else:
                 processing = "failed"
+                try:
+                    test_case = self._client.mark_automation_failed_status(test_case_id)
+                    if test_case is not None:
+                        status = test_case.get("status") or {}
+                        self._store.upsert_state(
+                            project_id=project_id,
+                            test_case_id=test_case_id,
+                            status_id=int(status.get("id", self._settings.status_automate_id)),
+                            last_modified=int(test_case.get("lastModifiedDate", 0)),
+                            processing="failed",
+                        )
+                except Exception:
+                    logger.exception("Failed to mark #%s as automation failed after CI failure", test_case_id)
 
             test_case_after = self._client.get_test_case(test_case_id)
             self._store.upsert_state(

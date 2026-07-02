@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/link.css" />
+    <link rel="stylesheet" href="css/input.css" />
+    <link rel="stylesheet" href="css/icon.css" />
+    <link rel="stylesheet" href="css/icon-btn.css" />
+    <link rel="stylesheet" href="css/lang-toggle.css" />
+    <link rel="stylesheet" href="css/header.css" />
+    <link rel="stylesheet" href="allure-shell.css" />
+    <style>
+      :root {
+        --text: #222;
+        --muted: #6b6b6b;
+        --button: #1677f2;
+        --focus: rgba(51, 93, 255, 0.2);
+        --error: #b91c1c;
+        --color-bg: #f5f0e8;
+        --color-surface: #2c2a26;
+        --color-text-inverse: #f5f0e8;
+        --color-primary: #20aee3;
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-6: 24px;
+        --radius-sm: 8px;
+        --duration-fast: 120ms;
+        --duration-normal: 200ms;
+        --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      body {
+        line-height: normal;
+      }
+
+
+
+      .page {
+        display: grid;
+        place-items: center;
+        padding: 96px 24px 70px;
+      }
+
+      .card {
+        width: min(440px, 100%);
+        background: #ffffff;
+        border: 1px solid #e3e9f5;
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1);
+        position: relative;
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 5px;
+        border-radius: 16px 16px 0 0;
+        background: linear-gradient(90deg, #b0bcc9, #8f9db0);
+      }
+
+      h1 {
+        margin: 0 0 18px;
+        text-align: center;
+        font-size: clamp(1.4rem, 2.7vw, 2rem);
+        letter-spacing: 0.2px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 100px 1fr;
+        align-items: start;
+        gap: 14px 18px;
+        margin-bottom: 14px;
+      }
+
+      .form-row input {
+        max-width: 240px;
+      }
+
+      label {
+        padding-top: 10px;
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 1rem;
+      }
+
+      input {
+        width: 100%;
+        height: 50px;
+        border: 1px solid #c4cfdf;
+        border-radius: 10px;
+        background: #f8fbff;
+        color: #111827;
+        font-size: 1.05rem;
+        line-height: 1.4;
+        padding: 12px 14px;
+        outline: none;
+      }
+
+      input::placeholder {
+        color: #6b7280;
+      }
+
+      input:focus {
+        border-color: #335dff;
+        box-shadow: 0 0 0 4px var(--focus);
+        background: #ffffff;
+      }
+
+      .login-form .actions {
+        display: flex;
+        justify-content: flex-start;
+        margin-top: 6px;
+        margin-left: calc(100px + 18px);
+      }
+
+      button {
+        border: none;
+        background: var(--button);
+        color: #fff;
+        border-radius: 10px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        padding: 12px 24px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #0e63d7;
+      }
+
+      .error {
+        min-height: 1.2em;
+        margin: 10px 0 0;
+        color: var(--error);
+        font-size: 0.9rem;
+      }
+
+      .success-panel {
+        display: none;
+        text-align: center;
+      }
+
+      .success-panel.is-visible {
+        display: block;
+      }
+
+      .success-panel p {
+        margin: 0 0 20px;
+        font-size: 1.1rem;
+        color: #1e293b;
+      }
+
+      .success-panel .actions {
+        justify-content: center;
+      }
+
+      .login-form.is-hidden,
+      .login-form-title.is-hidden {
+        display: none;
+      }
+
+      .logged-in-title {
+        display: none;
+      }
+
+      .logged-in-title.is-visible {
+        display: block;
+      }
+
+      .site-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: var(--z-header);
+        border-top: 1px solid #d9e2f3;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 14px 0;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      @media (max-width: 768px) {
+        .page {
+          padding: 80px 16px 70px;
+          place-items: start center;
+        }
+
+        .card {
+          padding: 22px 16px 18px;
+        }
+
+        .form-row {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .form-row input {
+          max-width: none;
+        }
+
+        label {
+          padding-top: 0;
+        }
+
+        .login-form .actions {
+          margin-left: 0;
+          margin-top: 8px;
+        }
+
+        #submit-button,
+        #logout-button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app-header"></div>
+    <script>
+      const loginPageLang = new URLSearchParams(window.location.search).has('ru')
+        ? 'ru'
+        : 'en';
+      window.headerConfig = {
+        brand: { href: 'https://qa.guru/' },
+        nav: [
+          { href: 'https://qa.guru/', label: 'Главная', active: true, testid: 'header-nav-home' },
+          { href: '#', label: 'Курсы', testid: 'header-nav-courses' },
+          { href: 'https://qa.guru/about', label: 'О школе', testid: 'header-nav-about' },
+        ],
+        lang: { default: loginPageLang },
+        theme: { default: 'light' },
+      };
+    </script>
+    <script type="module" src="js/header.js"></script>
+
+    <main class="page">
+      <section class="card">
+        <h1 class="login-form-title" data-testid="login-form-title">Login Form</h1>
+        <h1 class="logged-in-title" data-testid="logged-in-title">Logged In Form</h1>
+
+        <form id="login-form" class="login-form" data-testid="login-form">
+          <div class="form-row">
+            <label for="login-input">Login</label>
+            <input
+              id="login-input"
+              type="text"
+              placeholder=""
+              autocomplete="username"
+              data-testid="login-input"
+            />
+          </div>
+
+          <div class="form-row">
+            <label for="password-input">Password</label>
+            <input
+              id="password-input"
+              type="password"
+              placeholder=""
+              autocomplete="current-password"
+              data-testid="password-input"
+            />
+          </div>
+
+          <p id="error-message" class="error" aria-live="polite" data-testid="error-message"></p>
+
+          <div class="actions">
+            <button id="submit-button" type="submit" data-testid="submit-button">Submit</button>
+          </div>
+        </form>
+
+        <div id="success-panel" class="success-panel" data-testid="success-panel">
+          <p id="welcome-message" data-testid="welcome-message">Welcome!</p>
+          <div class="actions">
+            <button id="logout-button" type="button" data-testid="logout-button">Logout</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-shell">
+        <small>(c) QA.GURU 2019-2026</small>
+      </div>
+    </footer>
+
+    <script src="allure-shell.js"></script>
+    <script>
+      const I18N = {
+        en: {
+          pageTitle: "Login",
+          heading: "Login Form",
+          loggedInHeading: "Logged In Form",
+          labelLogin: "Login",
+          labelPassword: "Password",
+          submitButton: "Login",
+          welcomeDefault: "Welcome!",
+          welcomeUser: "Welcome, {login}!",
+          logoutButton: "Logout",
+          errorBothRequired: "Login and password are required (minimum {minLogin} and {minPassword} characters)",
+          errorLoginRequired: "Login is required (minimum {minLogin} characters)",
+          errorLoginMinLength: "Login must be at least {minLogin} characters",
+          errorPasswordRequired: "Password is required (minimum {minPassword} characters)",
+          errorPasswordMinLength: "Password must be at least {minPassword} characters",
+          errorWrongCredentials: "Wrong login or password",
+        },
+        ru: {
+          pageTitle: "Вход",
+          heading: "Форма входа",
+          loggedInHeading: "Форма после входа",
+          labelLogin: "Логин",
+          labelPassword: "Пароль",
+          submitButton: "Войти",
+          welcomeDefault: "Добро пожаловать!",
+          welcomeUser: "Добро пожаловать, {login}!",
+          logoutButton: "Выйти",
+          errorBothRequired: "Укажите логин и пароль (не менее {minLogin} и {minPassword} символов соответственно)",
+          errorLoginRequired: "Укажите логин (не менее {minLogin} символов)",
+          errorLoginMinLength: "Логин должен содержать не менее {minLogin} символов",
+          errorPasswordRequired: "Укажите пароль (не менее {minPassword} символов)",
+          errorPasswordMinLength: "Пароль должен содержать не менее {minPassword} символов",
+          errorWrongCredentials: "Неверный логин или пароль",
+        },
+      };
+
+      function formatMessage(template, values) {
+        return template.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");
+      }
+
+      function applyLoginI18n() {
+        const lang = AllureShell.getPageLang();
+        const t = I18N[lang] || I18N.en;
+        document.documentElement.lang = lang;
+        document.title = t.pageTitle;
+        document.querySelector('[data-testid="login-form-title"]').textContent = t.heading;
+        document.querySelector('[data-testid="logged-in-title"]').textContent = t.loggedInHeading;
+        document.querySelector('label[for="login-input"]').textContent = t.labelLogin;
+        document.querySelector('label[for="password-input"]').textContent = t.labelPassword;
+        document.getElementById("submit-button").textContent = t.submitButton;
+        document.getElementById("welcome-message").textContent = t.welcomeDefault;
+        document.getElementById("logout-button").textContent = t.logoutButton;
+        return t;
+      }
+
+      function syncLoginPageLangUrl(lang) {
+        const nextUrl = AllureShell.buildLangUrl(lang);
+        const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        if (nextUrl !== currentUrl) {
+          history.replaceState(null, '', nextUrl);
+        }
+      }
+
+      document.addEventListener('header:lang-change', (event) => {
+        const lang = event.detail?.lang === 'ru' ? 'ru' : 'en';
+        syncLoginPageLangUrl(lang);
+        t = applyLoginI18n();
+      });
+
+      let t = applyLoginI18n();
+      const AUTH_KEY = "authUser";
+      const USERBASE_KEY = "userbase";
+      const DEFAULT_USERBASE = "user1:password1";
+
+      const loginFormTitle = document.querySelector('[data-testid="login-form-title"]');
+      const loggedInTitle = document.querySelector('[data-testid="logged-in-title"]');
+      const loginForm = document.getElementById("login-form");
+      const loginLogin = document.getElementById("login-input");
+      const loginPassword = document.getElementById("password-input");
+      const loginError = document.getElementById("error-message");
+      const loginSuccess = document.getElementById("success-panel");
+      const welcomeMessage = document.getElementById("welcome-message");
+      const logoutButton = document.getElementById("logout-button");
+
+      function readLocalStorage(name) {
+        try {
+          return localStorage.getItem(name);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function writeLocalStorage(name, value) {
+        try {
+          localStorage.setItem(name, value);
+        } catch (e) {}
+      }
+
+      function removeFromLocalStorage(name) {
+        try {
+          localStorage.removeItem(name);
+        } catch (e) {}
+      }
+
+      function initUserbase() {
+        if (!readLocalStorage(USERBASE_KEY)) {
+          writeLocalStorage(USERBASE_KEY, DEFAULT_USERBASE);
+        }
+      }
+
+      function parseUserbase(userbase) {
+        if (!userbase) return { login: "", password: "" };
+        const separatorIndex = userbase.indexOf(":");
+        if (separatorIndex === -1) return { login: userbase, password: "" };
+        return {
+          login: userbase.slice(0, separatorIndex),
+          password: userbase.slice(separatorIndex + 1),
+        };
+      }
+
+      function validateLogin(login, password) {
+        const minLoginLength = 3;
+        const minPasswordLength = 6;
+
+        if (!login && !password) {
+          return formatMessage(t.errorBothRequired, {
+            minLogin: minLoginLength,
+            minPassword: minPasswordLength,
+          });
+        }
+        if (!login) {
+          return formatMessage(t.errorLoginRequired, { minLogin: minLoginLength });
+        }
+        if (login.length < minLoginLength) {
+          return formatMessage(t.errorLoginMinLength, { minLogin: minLoginLength });
+        }
+        if (!password) {
+          return formatMessage(t.errorPasswordRequired, { minPassword: minPasswordLength });
+        }
+        if (password.length < minPasswordLength) {
+          return formatMessage(t.errorPasswordMinLength, { minPassword: minPasswordLength });
+        }
+
+        const stored = parseUserbase(readLocalStorage(USERBASE_KEY));
+        if (login !== stored.login || password !== stored.password) {
+          return t.errorWrongCredentials;
+        }
+
+        return null;
+      }
+
+      function showLoggedIn(login) {
+        loginForm.classList.add("is-hidden");
+        loginSuccess.classList.add("is-visible");
+        loginFormTitle.classList.add("is-hidden");
+        loggedInTitle.classList.add("is-visible");
+        welcomeMessage.textContent = formatMessage(t.welcomeUser, { login });
+        loginError.textContent = "";
+      }
+
+      function showLoginForm() {
+        loginForm.classList.remove("is-hidden");
+        loginSuccess.classList.remove("is-visible");
+        loginFormTitle.classList.remove("is-hidden");
+        loggedInTitle.classList.remove("is-visible");
+        loginLogin.value = "";
+        loginPassword.value = "";
+        loginError.textContent = "";
+      }
+
+      loginForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const login = loginLogin.value.trim();
+        const password = loginPassword.value.trim();
+        const error = validateLogin(login, password);
+
+        if (error) {
+          loginError.textContent = error;
+          return;
+        }
+
+        writeLocalStorage(AUTH_KEY, login);
+        showLoggedIn(login);
+      });
+
+      logoutButton.addEventListener("click", () => {
+        removeFromLocalStorage(AUTH_KEY);
+        showLoginForm();
+      });
+
+      initUserbase();
+
+      const authUser = readLocalStorage(AUTH_KEY);
+      if (authUser) {
+        showLoggedIn(authUser);
+      }
+    </script>
+  </body>
+</html>

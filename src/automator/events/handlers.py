@@ -62,6 +62,7 @@ class TransitionHandler:
                     last_modified,
                 )
                 self._store.create_job(project_id, test_case_id)
+                self._mark_ai_automating(project_id, test_case_id)
                 logger.info("Queued automation job for #%s in project %s", test_case_id, project_id)
         else:
             logger.info(
@@ -99,8 +100,43 @@ class TransitionHandler:
 
         self._log_manual_test_case(project_id, test_case_id, test_case_name, last_modified)
         self._store.create_job(project_id, test_case_id)
+        self._mark_ai_automating(project_id, test_case_id)
         logger.info(
             "Backlog: queued automation for #%s (%s) in project %s",
+            test_case_id,
+            test_case_name,
+            project_id,
+        )
+        return True
+
+    def queue_stuck_ai_automation_if_needed(
+        self,
+        project_id: int,
+        test_case_id: int,
+        test_case_name: str,
+        status_id: int,
+    ) -> bool:
+        """Re-queue cases left in AI-automating status after a crash (no open job)."""
+        ai_id = self._settings.status_ai_automating_id
+        if ai_id is None or status_id != ai_id:
+            return False
+
+        if self._already_automated(project_id, test_case_id):
+            return False
+
+        state = self._store.get_state(project_id, test_case_id)
+        processing = state.processing if state else "idle"
+        if processing in ("running", "done"):
+            return False
+        if self._store.has_open_job(project_id, test_case_id):
+            return False
+        last = self._store.get_last_job(project_id, test_case_id)
+        if last is not None and last["status"] == "pending":
+            return False
+
+        self._store.create_job(project_id, test_case_id)
+        logger.info(
+            "Backlog: re-queued stuck AI automation for #%s (%s) in project %s",
             test_case_id,
             test_case_name,
             project_id,
@@ -146,3 +182,45 @@ class TransitionHandler:
                 project_id,
             )
             self._store.set_processing(project_id, test_case_id, "failed")
+
+    def _mark_ai_automating(self, project_id: int, test_case_id: int) -> None:
+        ai_id = self._settings.status_ai_automating_id
+        if ai_id is None:
+            return
+        try:
+            self._client.set_test_case_status(test_case_id, ai_id)
+            test_case = self._client.get_test_case(test_case_id)
+            self._store.upsert_state(
+                project_id=project_id,
+                test_case_id=test_case_id,
+                status_id=ai_id,
+                last_modified=int(test_case.get("lastModifiedDate", 0)),
+            )
+            logger.info("Moved #%s to AI-automating status (%s)", test_case_id, ai_id)
+        except Exception:
+            logger.exception(
+                "Failed to set AI-automating status for #%s in project %s",
+                test_case_id,
+                project_id,
+            )
+
+    def revert_to_automate_trigger(self, project_id: int, test_case_id: int) -> None:
+        """Move a failed case to «Сломано AI» or back to automate trigger."""
+        try:
+            test_case = self._client.mark_automation_failed_status(test_case_id)
+            if test_case is None:
+                return
+            status = test_case.get("status") or {}
+            self._store.upsert_state(
+                project_id=project_id,
+                test_case_id=test_case_id,
+                status_id=int(status.get("id", self._settings.status_automate_id)),
+                last_modified=int(test_case.get("lastModifiedDate", 0)),
+            )
+            logger.info("Marked #%s as automation failed in TestOps", test_case_id)
+        except Exception:
+            logger.exception(
+                "Failed to revert #%s to automate trigger status in project %s",
+                test_case_id,
+                project_id,
+            )

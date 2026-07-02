@@ -90,6 +90,38 @@ class GenerateWithPolicyTests(unittest.TestCase):
         self.assertIn("Добро пожаловать, user1!", generated.method_source)
         self.assertNotIn('text("...")', generated.method_source)
 
+    def test_catalog_wrong_password_scenario(self) -> None:
+        from automator.manual_case_catalog import pick_scenario
+
+        policy = load_generator_policy(RAG_DIR)
+        scenario = pick_scenario([])
+        generated = generate_test_java(
+            46001,
+            {"name": scenario.name},
+            scenario.step_bodies(),
+            policy=policy,
+        )
+        self.assertEqual(generated.tag, "negative")
+        self.assertIn("[data-testid=error-message]", generated.method_source)
+        self.assertIn("Неверный логин или пароль", generated.method_source)
+        self.assertNotIn("fail(", generated.method_source)
+
+    def test_catalog_success_login_scenario(self) -> None:
+        from automator.manual_case_catalog import pick_scenario
+
+        policy = load_generator_policy(RAG_DIR)
+        scenario = pick_scenario(["Неуспешный логин с неверным паролем"])
+        generated = generate_test_java(
+            46002,
+            {"name": scenario.name},
+            scenario.step_bodies(),
+            policy=policy,
+        )
+        self.assertEqual(generated.tag, "positive")
+        self.assertIn("[data-testid=welcome-message]", generated.method_source)
+        self.assertIn("Добро пожаловать, user1!", generated.method_source)
+        self.assertNotIn("fail(", generated.method_source)
+
 
 if __name__ == "__main__":
     unittest.main()

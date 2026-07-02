@@ -1,0 +1,43 @@
+/* Preview-only — config gallery on header-examples.html */
+
+.page-header-preview main {
+  max-width: none;
+  margin: 0;
+  padding: calc(var(--header-height) + var(--space-6)) 0 var(--space-6);
+}
+
+.page-header-preview main > :not(.header-preview):not(.header-preview__embed) {
+  padding-inline: var(--page-padding-x);
+}
+
+.page-header-preview .header-preview {
+  margin: var(--space-6) 0 0;
+  padding-inline: var(--page-padding-x);
+}
+
+.page-header-preview .header-preview__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.page-header-preview .header-preview__meta {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.page-header-preview .header-preview__meta + .header-preview__meta {
+  margin-top: var(--space-2);
+}
+
+.page-header-preview .header-preview__embed {
+  margin-bottom: var(--space-6);
+}
+
+.page-header-preview .header-preview__frame {
+  display: block;
+  width: 100%;
+  height: var(--header-height);
+  border: 0;
+}

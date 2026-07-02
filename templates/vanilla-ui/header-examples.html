@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Header examples — template-project</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/link.css">
+  <link rel="stylesheet" href="css/input.css">
+  <link rel="stylesheet" href="css/icon.css">
+  <link rel="stylesheet" href="css/icon-btn.css">
+  <link rel="stylesheet" href="css/lang-toggle.css">
+  <link rel="stylesheet" href="css/header.css">
+  <link rel="stylesheet" href="css/page.css">
+  <link rel="stylesheet" href="css/header-preview.css">
+</head>
+<body class="page-header-preview">
+  <div id="app-header"></div>
+  <script>
+    window.headerConfig = {
+      brand: { href: 'https://qa.guru/' },
+      nav: [
+        { href: 'https://qa.guru/', label: 'Главная', active: true, testid: 'header-nav-home' },
+        // TODO: отдельной страницы курсов на qa.guru нет (/courses → 404)
+        { href: '#', label: 'Курсы', testid: 'header-nav-courses' },
+        { href: 'https://qa.guru/about', label: 'О школе', testid: 'header-nav-about' },
+      ],
+    };
+  </script>
+  <main>
+    <p class="status">Фаза 2 — header examples</p>
+    <h1>Header examples</h1>
+    <p>
+      Локально: <code>python -m http.server 3000</code> из <code>frontend/</code>,
+      затем <a href="header.html">header.html</a> (harness для e2e) или эта страница.
+    </p>
+    <p>
+      <a href="components.html">Components</a> — каталог примитивов.
+      <a href="playground.html">Playground</a> — редактор config.
+    </p>
+
+    <section class="header-preview" aria-labelledby="header-variant-1">
+      <div class="header-preview__caption">
+        <h2 class="header-preview__title" id="header-variant-1">Вариант 1 — основной (inline)</h2>
+        <p class="header-preview__meta">
+          active: «Главная» · brand: <code>https://qa.guru/</code> · nav: 3 пункта
+        </p>
+        <p class="header-preview__meta">См. fixed header вверху страницы.</p>
+      </div>
+    </section>
+
+    <section class="header-preview" aria-labelledby="header-variant-2">
+      <div class="header-preview__caption">
+        <h2 class="header-preview__title" id="header-variant-2">Вариант 2</h2>
+        <p class="header-preview__meta">
+          active: «Курсы» · brand: <code>https://qa.guru/</code> · nav: 3 пункта
+        </p>
+      </div>
+    </section>
+    <div class="header-preview__embed">
+      <iframe
+        class="header-preview__frame"
+        src="header-variant-courses-active.html"
+        title="Header — active «Курсы»"
+        loading="lazy"
+      ></iframe>
+    </div>
+
+    <section class="header-preview" aria-labelledby="header-variant-3">
+      <div class="header-preview__caption">
+        <h2 class="header-preview__title" id="header-variant-3">Вариант 3</h2>
+        <p class="header-preview__meta">
+          active: «О школе» · brand: <code>https://github.com/qa-guru</code> · nav: 2 пункта
+        </p>
+      </div>
+    </section>
+    <div class="header-preview__embed">
+      <iframe
+        class="header-preview__frame"
+        src="header-variant-about-github.html"
+        title="Header — active «О школе», brand GitHub"
+        loading="lazy"
+      ></iframe>
+    </div>
+  </main>
+  <script type="module" src="js/header.js"></script>
+</body>
+</html>

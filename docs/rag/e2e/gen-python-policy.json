@@ -29,7 +29,7 @@
     "error": "error_message"
   },
   "assert_keywords": {
-    "welcome": ["привет", "welcome"],
+    "welcome": ["привет", "welcome", "logged-in", "logged in", "success-panel"],
     "error": []
   }
 }

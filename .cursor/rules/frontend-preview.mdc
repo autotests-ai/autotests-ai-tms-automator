@@ -1,0 +1,28 @@
+---
+description: После правок vanilla-ui — file:// preview; HTTP только для e2e
+globs: templates/vanilla-ui/**/*.{css,html}
+alwaysApply: false
+---
+
+# Frontend preview
+
+После изменений в `templates/vanilla-ui/` **не запускай** `python -m http.server` для рутинного preview, если пользователь явно не просит e2e.
+
+## Preview
+
+| Страница | URL |
+|----------|-----|
+| login | `file://…/templates/vanilla-ui/login.html` |
+| header harness | `file://…/templates/vanilla-ui/header.html` (CSS ok; module mount может не работать на file://) |
+
+Для header mount + e2e — HTTP:
+
+```bash
+cd templates/vanilla-ui && python -m http.server 3000
+```
+
+## E2e
+
+`gradle test` из `templates/tests-java/` — rule `e2e-debug-run`; сервер cwd = `templates/vanilla-ui/`.
+
+Проверка размеров — skill `playground-verify`.

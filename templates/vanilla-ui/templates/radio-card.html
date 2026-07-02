@@ -1,0 +1,60 @@
+<!-- templates/radio-card.html — вставить в .section__body.stack.stack--sm -->
+<div class="radio-group" data-testid="radio-group-default">
+  <h3 class="radio-group__title">Default</h3>
+  <div class="stack stack--sm">
+    <label class="radio-card" data-testid="radio-card-a">
+      <input
+        type="radio"
+        class="radio__input"
+        name="radio-card-demo"
+        value="a"
+        data-testid="radio-card-input-a"
+        checked
+      >
+      <div class="radio-card__body stack stack--sm">
+        <div class="stack stack--sm stack--row">
+          <span>Option A</span>
+          <span class="badge">v1</span>
+        </div>
+        <p>Краткое описание первого варианта.</p>
+      </div>
+    </label>
+    <label class="radio-card" data-testid="radio-card-b">
+      <input
+        type="radio"
+        class="radio__input"
+        name="radio-card-demo"
+        value="b"
+        data-testid="radio-card-input-b"
+      >
+      <div class="radio-card__body stack stack--sm">
+        <div class="stack stack--sm stack--row">
+          <span>Option B</span>
+          <span class="badge">v2</span>
+        </div>
+        <p>Краткое описание второго варианта.</p>
+      </div>
+    </label>
+  </div>
+</div>
+<div class="radio-group" data-testid="radio-group-optional">
+  <h3 class="radio-group__title">Optional</h3>
+  <div class="stack stack--sm">
+    <label class="radio-card radio-card--muted" data-testid="radio-card-c">
+      <input
+        type="radio"
+        class="radio__input"
+        name="radio-card-demo"
+        value="c"
+        data-testid="radio-card-input-c"
+      >
+      <div class="radio-card__body stack stack--sm">
+        <div class="stack stack--sm stack--row">
+          <span>Option C</span>
+          <span class="badge">beta</span>
+        </div>
+        <p>Дополнительный вариант с модификатором muted.</p>
+      </div>
+    </label>
+  </div>
+</div>

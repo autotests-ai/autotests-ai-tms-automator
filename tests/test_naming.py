@@ -3,6 +3,7 @@ import unittest
 from automator.generator.naming import build_test_names, canonical_class_name
 from automator.generator.java_tests import (
     append_method,
+    ensure_static_imports,
     find_equivalent_class,
     load_existing_test_classes,
     normalize_class_file,
@@ -70,6 +71,11 @@ public class SignInTests extends TestBase {
         merged = append_method(self.SAMPLE_CLASS, method)
         self.assertIn("existingTest", merged)
         self.assertIn("newTest", merged)
+
+    def test_ensure_static_imports_adds_fail(self) -> None:
+        method = '        step("x", () -> fail("missing"));'
+        merged = ensure_static_imports(self.SAMPLE_CLASS, method)
+        self.assertIn("import static com.codeborne.selenide.Selenide.fail;", merged)
 
     def test_normalize_class_name(self) -> None:
         normalized = normalize_class_file(self.SAMPLE_CLASS, "LoginTests")

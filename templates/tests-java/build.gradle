@@ -40,6 +40,7 @@ plugins {
 }
 
 def allureReportMode = System.getProperty('allureReportMode', 'allure3')
+def allureQualityGateHook = System.getProperty('allureQualityGate', 'false') == 'true'
 
 repositories {
     mavenCentral()
@@ -117,13 +118,13 @@ def runAppHealthCheck = {
         if (code != 200) {
             throw new GradleException(
                     "App health check failed: GET ${healthUrl} returned HTTP ${code}. " +
-                    'Start HTTP server from frontend/: cd frontend && python -m http.server 3000'
+                    'Start HTTP server from templates/vanilla-ui/: cd templates/vanilla-ui && python -m http.server 3000'
             )
         }
     } catch (java.net.ConnectException | java.net.SocketTimeoutException e) {
         throw new GradleException(
                 "App health check failed: cannot reach ${healthUrl} (${e.class.simpleName}). " +
-                'Start HTTP server from frontend/: cd frontend && python -m http.server 3000',
+                'Start HTTP server from templates/vanilla-ui/: cd templates/vanilla-ui && python -m http.server 3000',
                 e
         )
     }
@@ -131,7 +132,7 @@ def runAppHealthCheck = {
 
 tasks.register('healthCheck') {
     group = 'verification'
-    description = 'GET baseUrl/login.html — requires HTTP server from frontend/ (port 3000)'
+    description = 'GET baseUrl/login.html — requires HTTP server from templates/vanilla-ui/ (port 3000)'
     doLast runAppHealthCheck
 }
 
@@ -150,6 +151,30 @@ test {
     systemProperty 'env', System.getProperty('env', defaultEnv)
     systemProperty 'allureReportMode', allureReportMode
     maxParallelForks = testParallelForks
+}
+
+def allureResultsDir = layout.buildDirectory.dir('allure-results').get().asFile
+
+def hasAllureResults = {
+    allureResultsDir.exists() && (allureResultsDir.listFiles()?.length ?: 0) > 0
+}
+
+tasks.register('allureQualityGate', Exec) {
+    group = 'verification'
+    description = 'Allure 3 quality gate on build/allure-results (rules in allurerc.json)'
+    onlyIf {
+        System.getProperty('allureReportMode', 'allure3') != 'none' && hasAllureResults()
+    }
+    def resultsDir = allureResultsDir.path
+    def configFile = layout.projectDirectory.file('allurerc.json').asFile.path
+    commandLine 'npx', '--yes', "allure@${allureVersion}", 'quality-gate',
+            resultsDir, '--config', configFile
+}
+
+if (allureQualityGateHook && allureReportMode != 'none') {
+    tasks.named('test', Test).configure {
+        finalizedBy 'allureQualityGate'
+    }
 }
 
 if (allureReportMode == 'none') {

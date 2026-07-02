@@ -7,6 +7,7 @@ from automator.config import Settings
 from automator.errors import AutomationError, RepositoryNotFoundError
 from automator.generator.java_tests import (
     append_method,
+    ensure_static_imports,
     has_allure_id,
     load_existing_test_classes,
     normalize_class_file,
@@ -146,6 +147,7 @@ class ProjectRepositoryService:
 
             content = normalize_class_file(existing_match.content, canonical_class_name)
             content = append_method(content, method_source)
+            content = ensure_static_imports(content, method_source)
             relative_path = f"src/test/java/tests/{canonical_class_name}.java"
             old_relative = existing_match.file_path.relative_to(workdir).as_posix()
             if old_relative != relative_path:

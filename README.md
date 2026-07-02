@@ -6,20 +6,25 @@ GitHub: [qa-guru/qa-guru-tms-automator](https://github.com/qa-guru/qa-guru-tms-a
 
 ## Workflow и статусы
 
-Workflow **4** — «Автоматизация ручных тестов с ИИ» (`allure.autotests.cloud`).
+Workflow **6** — «Ручные тесты» (`allure.autotests.cloud`).
 
 | id | Название в UI / API |
 |----|---------------------|
 | **-1** | Черновик (API: `Draft`) |
-| **-2** | На ревью (API: `Review`) |
-| **5** | ✨ Автоматизировать |
-| **13** | Автоматизировано с ИИ |
+| **14** | На ревью |
+| **5** | ✨ Автоматизировать с AI |
+| **17** | AI автоматизирует — automator ставит при старте job |
+| **16** | Сломано AI — automator ставит при ошибке CI/генерации |
 
-**Триггер автоматизации:** переход в **✨ Автоматизировать (5)** с любого другого статуса (в т.ч. **-2 → 5**, **-1 → 5**); **5 → 5** игнорируется — защита от повторного срабатывания, если статус не менялся.
+**Успех:** workflow **5 «Автоматизированные тесты»**, статус **13 «Автоматизировано с AI»**.
 
-Повторный запуск для уже автоматизированного кейса (**13 → 5** и т.п.) пока не поддерживается — один прогон на тест-кейс.
+**Триггер автоматизации:** переход в **✨ Автоматизировать с AI (5)** с любого другого статуса; **5 → 5** игнорируется.
 
-**После успешного CI:** workflow-статус **13** («Автоматизировано с ИИ») и тип «автоматизированный» выставляет **TestOps** при обработке upload с `@AllureId` — automator статус не меняет.
+**В процессе:** automator переводит кейс в **17 AI автоматизирует** после постановки job.
+
+**Ошибка:** automator переводит кейс в **16 Сломано AI**; повтор — вручную вернуть в **5**.
+
+**После успешного CI:** automator закрывает launch; TestOps ставит `automated=true`, затем automator переводит кейс в workflow **5** / статус **13**.
 
 ## Что делает automator
 
@@ -30,13 +35,31 @@ Workflow **4** — «Автоматизация ручных тестов с И�
 5. Пишет в TestOps комментарии со ссылками на Actions и отчёт
 6. Прикрепляет видео прогона к тест-кейсу
 
+При создании repo automator также включает **GitHub Pages** (ветка `gh-pages`) для Allure-отчётов.
+
+## Templates и agent meta
+
+| Путь | Роль |
+|------|------|
+| `templates/tests-java/` | **SSOT** e2e эталон (pyramid, visual, header, embed) + GitHub bootstrap (trim в automator) |
+| `templates/vanilla-ui/` | Static UI (login/header) для local и генерации HTML |
+| `docs/rag/` | Vendored RAG (SSOT maintainer: template-project) |
+| `projects/{repo_name}/` | Локальная копия GitHub project repo |
+| `.cursor/skills/automate-manual-test` | Канон TestOps → Java (только здесь) |
+
+Индекс skills: [`docs/skills-map.md`](docs/skills-map.md).
+
+### Локальный прогон эталона
+
+```bash
+cd templates/vanilla-ui && python -m http.server 3000
+cd templates/tests-java && gradle test -DincludeTags=smoke -DexcludeTags=visual
+```
+
 ### Upload в TestOps (CI)
 
-Если в репозитории заданы `vars.ALLURE_PROJECT_ID` + `vars.ALLURE_ENDPOINT` и secret `ALLURE_TOKEN`, после прогона `./gradlew test` результаты отправляются в TestOps через `allurectl upload` (отдельный шаг: падение upload не красит job, если тесты прошли). Без credentials — только Pages + artifact.
-
-`BROWSER_VERSION` задаётся в workflow (`env`, передаётся как `-DbrowserVersion`); в `ci.properties` версии браузера нет.
-
-При создании репозитория automator прописывает `ALLURE_PROJECT_ID`, `ALLURE_ENDPOINT` и `ALLURE_TOKEN` из `.env`. Для уже существующих репозиториев — один раз вручную:
+Vars: `ALLURE_PROJECT_ID`, `ALLURE_ENDPOINT`; secret: `ALLURE_TOKEN`.  
+Workflow: `templates/tests-java/.github/workflows/selenoid-autotests-cloud_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`).
 
 ```bash
 gh variable set ALLURE_PROJECT_ID --body 5267 -R autotests-cloud/qa_guru_automator_ethalon-5267
@@ -44,12 +67,20 @@ gh variable set ALLURE_ENDPOINT --body https://allure.autotests.cloud -R autotes
 gh secret set ALLURE_TOKEN -R autotests-cloud/qa_guru_automator_ethalon-5267
 ```
 
-Шаблон репозитория: `templates/project-tests/` (инфраструктура без эталонных тестов)  
-Эталон для разработки: `tests-java/` → после правок синхронизировать в `templates/project-tests/` (исключая `LoginTests.java`)  
-Локальная копия проекта: `projects/{repo_name}/` (имя = GitHub-репозиторий, напр. `qa_guru_automator_ethalon-5267`)  
-Образец стиля автотестов (только локально): `tests-java/src/test/java/tests/LoginTests.java`
+GitHub bootstrap: `prepare_bootstrap_workdir()` копирует `templates/tests-java/` без e2e-классов, `pages/` и visual baselines.
 
-## Запуск
+### RAG (vendored)
+
+Maintainer: `template-project/docs/rag/`. Runtime: `docs/rag/`. Skill: `sync-rag`.
+
+```bash
+python scripts/sync_rag_from_template_project.py          # обновить копию
+python scripts/sync_rag_from_template_project.py --check  # проверить sync
+python scripts/sync_testops_layer_mappings.py --project-id 5271,5267,5263  # Key→Test Layer в TestOps
+python scripts/sync_testops_layer_mappings.py --list-mapping
+```
+
+## Запуск automator
 
 ```bash
 cp .env.example .env   # ALLURE_API_TOKEN + gh auth login

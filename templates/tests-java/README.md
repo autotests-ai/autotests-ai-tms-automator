@@ -1,29 +1,24 @@
 # tests-java — эталон e2e (Java)
 
-Selenide + JUnit 5 + Allure. **Единственный канон** стиля и структуры e2e в template-project.
+Selenide + JUnit 5 + Allure. **SSOT** e2e в `qa-guru-tms-automator`.
 
-**Фаза 4a ✓** — login/logout на `frontend/login.html`.  
-**Фаза 4b.1 ✓** — header smoke на `frontend/header.html`.  
-**Фаза 4.visual ✓** — screenshot baselines (`*BaselineTests`, `ScreenshotBaseline`).  
-**Фаза 4.pyramid ✓** — testing pyramid: unit / component / integration / e2e / manual.  
-**Фаза 6 ✓** — login embed (`LoginEmbedTests`).  
+**Static root (local):** `templates/vanilla-ui/` — `python -m http.server 3000`.  
+**RAG:** [`docs/rag/e2e/`](../../docs/rag/e2e/), [`docs/rag/e2e-header/`](../../docs/rag/e2e-header/).  
+**ADR:** [`docs/adr/002-e2e-canonical-patterns.md`](../../docs/adr/002-e2e-canonical-patterns.md), [`003-header-smoke-e2e.md`](../../docs/adr/003-header-smoke-e2e.md), [`004-fast-testops-warm-pool.md`](../../docs/adr/004-fast-testops-warm-pool.md).
 
-**E2e stack release-ready** (4a + 4b.1 + 4.visual + 4.pyramid) — канон для bootstrap; curriculum — отдельно в `tests-java-curriculum/`.
-
-Паттерны login: ADR 002, чанки [`docs/rag/e2e/`](../docs/rag/e2e/).  
-Учебная ladder (negative, listener, LogoutTests): [`tests-java-curriculum/`](../tests-java-curriculum/) — не CI.  
-Header (4b): ADR 003, чанки [`docs/rag/e2e-header/`](../docs/rag/e2e-header/). Индекс: [`docs/rag/README.md`](../docs/rag/README.md).
+**GitHub bootstrap:** тот же каталог — automator копирует infra через `prepare_bootstrap_workdir()` (без e2e test classes, `pages/`, baselines).  
+**CI workflow:** `.github/workflows/selenoid-autotests-cloud_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`).
 
 ## Prerequisites
 
 - JDK 17+
 - Chrome (local) или Selenoid (remote profiles)
-- **`frontend/`** — единый static root в репо (или override `basePath` / `-DbaseUrl`)
+- **`templates/vanilla-ui/`** — static root (или override `basePath` / `-DbaseUrl`)
 - Gradle 9+ (локально установленный `gradle`, wrapper не используем)
 
 ## Target (login + header)
 
-Все harness-страницы в `frontend/`:
+Все harness-страницы в `templates/vanilla-ui/`:
 
 | Harness | Путь при `baseUrl=http://localhost:3000/` |
 |---------|---------------------------------------------|
@@ -39,12 +34,12 @@ PO: `open("/login.html")`, `open("/header.html")` — без config path keys.
 `header.js` — ES module; **нужен HTTP** (не `file://`).
 
 ```bash
-# терминал 1 — cwd = frontend/
-cd frontend
+# терминал 1 — cwd = templates/vanilla-ui/
+cd templates/vanilla-ui
 python -m http.server 3000
 
 # терминал 2
-cd tests-java
+cd templates/tests-java
 gradle test
 ```
 
@@ -135,12 +130,31 @@ gradle test -DincludeTags=layout,mount                   # integration — Heade
 Allure report (после прогона):
 
 ```bash
-gradle allureReport
+./gradlew allureQualityGate   # exit 1 если rules в allurerc.json не прошли (см. alr-quality-gate)
+./gradlew allureReport
 # file:// блокируется во встроенном браузере Cursor — открывать через HTTP:
 # cd build/reports/allure-report/allureReport && python -m http.server 5050
 # → http://localhost:5050/
 # или в системном браузере: open build/reports/allure-report/allureReport/index.html
 ```
+
+### Quality gate
+
+Allure 3 quality gate — отдельный шаг после `test`, до `allureReport` / TestOps upload.
+
+| Артефакт | Назначение |
+|----------|------------|
+| `allurerc.json` → `qualityGate.rules` | Правила (default: `maxFailures: 0`) |
+| `known.json` | Known issues по `historyId` (не считаются в `maxFailures`) |
+| Gradle `allureQualityGate` | `npx allure@<allureVersion> quality-gate build/allure-results` |
+
+```bash
+gradle test -DincludeTags=smoke -DexcludeTags=visual && gradle allureQualityGate
+# или hook на test:
+gradle test -DallureQualityGate=true -DincludeTags=smoke -DexcludeTags=visual
+```
+
+CI: шаг **Allure 3 quality gate** после Run app e2e tests; job fail при `TEST_EXIT≠0` или `QUALITY_GATE_EXIT≠0`. RAG: [`alr-quality-gate`](../../docs/rag/e2e/alr-quality-gate.md).
 
 ## Env profiles
 
@@ -152,8 +166,24 @@ gradle allureReport
 | `one-page-form-prod.properties` | GitHub Pages one-page-form (login only) |
 | `selenoid-local.properties` | Remote hub, prod URL |
 | `selenoid.autotests.cloud-prod.properties` | Cloud Selenoid |
+| `ci.properties` | GHA + Selenoid cloud, full Allure attachments (Run 3 diagnostic) |
+| `fast-testops.properties` | Co-located Jenkins + warm pool: lean browser, Allure minimal (Run 1/2) |
 
 Выбор: `-Denv=<name>` → `classpath:config/<name>.properties`.
+
+### Fast TestOps (3-run)
+
+Run 1/2: `-Denv=fast-testops` — `allure3` без attachments, `@AllureId` в generated test, `allurectl upload`.  
+Run 3: `-Denv=ci` — video, screenshot, pageSource, debug logs.
+
+```bash
+export TEST_CLASS='tests.LoginTests.shouldLoginWithValidCredentials'
+export PREOPEN_URL='https://qa-guru.github.io/one-page-form/login.html'
+chmod +x scripts/testops-fast-launch.example.sh
+./scripts/testops-fast-launch.example.sh
+```
+
+См. [`docs/adr/004-fast-testops-warm-pool.md`](../../docs/adr/004-fast-testops-warm-pool.md), warm pool: `selenoid-home/warm-pool-orchestrator/`.
 
 ## Config keys
 

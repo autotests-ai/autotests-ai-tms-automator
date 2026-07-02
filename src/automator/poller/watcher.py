@@ -93,4 +93,12 @@ class StatusWatcher:
             ):
                 transitions += 1
 
+            if self._handler.queue_stuck_ai_automation_if_needed(
+                project_id,
+                test_case_id,
+                test_case_name,
+                status_id,
+            ):
+                transitions += 1
+
         return transitions

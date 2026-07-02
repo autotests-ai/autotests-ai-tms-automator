@@ -1,0 +1,61 @@
+---
+description: Обязательный RAG retrieval при bootstrap и генерации e2e в project repos
+globs: projects/**,src/automator/generator/**,.cursor/skills/bootstrap-project-repo/**,.cursor/skills/automate-manual-test/**
+alwaysApply: false
+---
+
+# RAG retrieval (project generation)
+
+Перед bootstrap GitHub repo или генерацией Java-теста **прочитай vendored RAG** — не угадывай паттерны из памяти.
+
+## Где читать (runtime)
+
+```
+qa-guru-tms-automator/docs/rag/
+```
+
+Это **vendored-копия**. SSOT maintainer — `template-project/docs/rag/` (правки только там).
+
+Обновление копии:
+
+Обновление копии — skill `sync-rag`:
+
+```bash
+python scripts/sync_rag_from_template_project.py
+# проверка без записи:
+python scripts/sync_rag_from_template_project.py --check
+```
+
+Env `TEMPLATE_PROJECT_DIR` — только источник для sync-скрипта, не для чтения агентом.
+
+## Минимальный набор чанков
+
+| id | Когда |
+|----|-------|
+| `e2e-config-keys` | config, `-Denv`, Selenoid |
+| `test-taxonomy` | `@Layer`, `@Tag`, naming |
+| `test-layers` | TestOps Key → Test Layer mapping (`e2e` → E2E Tests) |
+| `test-style-ladder` | стиль generated vs PO |
+| `po-locators` | `[data-testid=…]` |
+| `po-step` | `@Step`, fluent PO |
+| `base-lifecycle` | `TestBase`, browser reset |
+| `cfg-env-profile` | `local.properties` / `ci.properties` |
+| `gen-python-policy` | Python automator: locators, tags, i18n (`gen-python-policy.json`) |
+
+Header-кейсы: + `docs/rag/e2e-header/hdr-selectors.md`, `hdr-behavior.md`.  
+Visual: + `visual-baseline.md`.  
+Индекс: `docs/rag/manifest.jsonl`.
+
+## Workflow
+
+1. Открыть `docs/rag/manifest.jsonl` в **этом** репо.
+2. Прочитать чанки по id (или по `tags` задачи: `config`, `pattern`, `selectors`).
+3. Сверить с `templates/tests-java/` — код следует чанкам, не наоборот.
+4. При bootstrap automator кладёт `docs/rag/` + ADR 002/003 в project repo из vendored-копии.
+
+## Don't
+
+- Не генерировать тесты без чтения `test-taxonomy` и `po-locators`.
+- Не править `docs/rag/` в automator вручную — sync из template-project.
+- Не править файлы в `template-project/` из automator-чата.
+- Не дублировать ADR-текст в тестах — только паттерны из чанков.
