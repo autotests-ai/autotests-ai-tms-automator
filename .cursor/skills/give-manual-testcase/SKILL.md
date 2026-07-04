@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 # Give Manual Test Case → ручная проверка → быстрая автоматизация
 
-Base: `qa-guru-tms-automator/`.  
+Base: `autotests-ai-tms-automator/`.  
 Связанный skill: `automate-manual-test` — генерация Java после статуса **✨ Автоматизировать (5)**.
 
 ## Триггер
@@ -50,7 +50,7 @@ Base: `qa-guru-tms-automator/`.
 ### 1. Создать ручной кейс
 
 ```bash
-cd qa-guru-tms-automator
+cd autotests-ai-tms-automator
 
 # project_id из MONITOR_PROJECT_IDS или явно
 python scripts/create_manual_testcase.py {project_id} --auto --start-automator --json

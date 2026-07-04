@@ -8,7 +8,7 @@ description: >-
 
 # Bootstrap project test repo
 
-Base: `qa-guru-tms-automator/`
+Base: `autotests-ai-tms-automator/`
 
 ## Naming
 
@@ -71,7 +71,7 @@ Automator при `ensure_repository()` копирует канон RAG в `docs/
 
 ```bash
 gh repo view autotests-cloud/{repo_name} 2>/dev/null && echo exists || echo missing
-ls qa-guru-tms-automator/projects/{repo_name}/
+ls autotests-ai-tms-automator/projects/{repo_name}/
 ```
 
 ### 2. Создать repo (если нет)
@@ -79,7 +79,7 @@ ls qa-guru-tms-automator/projects/{repo_name}/
 Через automator (предпочтительно):
 
 ```bash
-cd qa-guru-tms-automator
+cd autotests-ai-tms-automator
 python -m pip install -e .
 # .env: ALLURE_API_TOKEN, gh auth
 ```
@@ -97,7 +97,7 @@ gh secret set ALLURE_TOKEN -R autotests-cloud/{repo_name}
 ### 3.1 TestOps layer mappings (обязательно для нового project_id)
 
 ```bash
-cd qa-guru-tms-automator
+cd autotests-ai-tms-automator
 python scripts/sync_testops_layer_mappings.py --project-id {project_id}
 ```
 

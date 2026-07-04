@@ -1,5 +1,5 @@
 [project]
-name = "qa-guru-tms-automator"
+name = "autotests-ai-tms-automator"
 version = "0.1.0"
 description = "Monitor Allure TestOps workflow statuses and automate manual test cases"
 requires-python = ">=3.12"

@@ -15,7 +15,7 @@
 | Метод | `successfulAuthorizationTest` |
 
 ```bash
-cd qa-guru-tms-automator/projects/qa_guru_automator_ethalon-5267
+cd autotests-ai-tms-automator/projects/qa_guru_automator_ethalon-5267
 ./gradlew test --tests tests.LoginTests.successfulAuthorizationTest -Denv=ci
 ```
 

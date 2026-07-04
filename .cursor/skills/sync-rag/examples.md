@@ -4,7 +4,7 @@
 
 ```bash
 # template-project — правка docs/rag/e2e/test-taxonomy.md
-cd qa-guru-tms-automator
+cd autotests-ai-tms-automator
 python scripts/sync_rag_from_template_project.py --check   # покажет changed: …
 python scripts/sync_rag_from_template_project.py
 git status docs/rag docs/adr

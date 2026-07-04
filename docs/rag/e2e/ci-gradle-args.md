@@ -42,7 +42,7 @@ Profile: `selenoid-autotests-cloud_github_e2e` (+ tags `-DincludeTags=smoke -Dex
 
 Visual nightly: `env_profile=selenoid-autotests-cloud_github_visual` (+ auto `includeTags=visual`)
 
-Consumer reference: `qa-guru-home/qa-guru-tms-automator/templates/tests-java/.github/workflows/selenoid-autotests-cloud_github.yml` (migrate `-Denv=ci`).
+Consumer reference: `qa-guru-home/autotests-ai-tms-automator/templates/tests-java/.github/workflows/selenoid-autotests-cloud_github.yml` (migrate `-Denv=ci`).
 
 ## Hub orchestrator — `selenoid_github-orchestrator.yml`
 

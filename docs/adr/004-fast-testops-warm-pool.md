@@ -80,7 +80,7 @@ Example shell: `templates/tests-java/scripts/testops-fast-launch.example.sh`.
 ```markdown
 ## Goal
 
-Implement fast TestOps UI test launch per ADR 004 in qa-guru-tms-automator + selenoid-home.
+Implement fast TestOps UI test launch per ADR 004 in autotests-ai-tms-automator + selenoid-home.
 
 ## Baseline
 

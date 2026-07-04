@@ -1,4 +1,4 @@
-# Карта skills и rules (qa-guru-tms-automator)
+# Карта skills и rules (autotests-ai-tms-automator)
 
 Skills: `.cursor/skills/<name>/SKILL.md`  
 Rules: `.cursor/rules/*.mdc`

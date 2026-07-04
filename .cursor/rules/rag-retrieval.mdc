@@ -11,7 +11,7 @@ alwaysApply: false
 ## Где читать (runtime)
 
 ```
-qa-guru-tms-automator/docs/rag/
+autotests-ai-tms-automator/docs/rag/
 ```
 
 Это **vendored-копия**. SSOT maintainer — `template-project/docs/rag/` (правки только там).

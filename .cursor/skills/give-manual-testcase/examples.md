@@ -3,7 +3,7 @@
 ## Создание
 
 ```bash
-cd qa-guru-tms-automator
+cd autotests-ai-tms-automator
 python scripts/create_manual_testcase.py 5267 --auto --start-automator
 ```
 

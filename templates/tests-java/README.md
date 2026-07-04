@@ -1,6 +1,6 @@
 # tests-java — эталон e2e (Java)
 
-Selenide + JUnit 5 + Allure. **SSOT** e2e в `qa-guru-tms-automator`.
+Selenide + JUnit 5 + Allure. **SSOT** e2e в `autotests-ai-tms-automator`.
 
 **Static root (local):** `templates/vanilla-ui/` — `python -m http.server 3000`.  
 **RAG:** [`docs/rag/e2e/`](../../docs/rag/e2e/), [`docs/rag/e2e-header/`](../../docs/rag/e2e-header/).  

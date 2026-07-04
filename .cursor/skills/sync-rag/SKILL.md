@@ -1,21 +1,21 @@
 ---
 name: sync-rag
 description: >-
-  Sync vendored docs/rag from template-project (SSOT) into qa-guru-tms-automator.
+  Sync vendored docs/rag from template-project (SSOT) into autotests-ai-tms-automator.
   Use when user asks to update RAG, sync rag, refresh rag chunks, or after
   editing docs/rag in template-project.
 ---
 
 # Sync RAG (template-project → automator)
 
-Base: `qa-guru-tms-automator/`
+Base: `autotests-ai-tms-automator/`
 
 ## Модель
 
 | Роль | Путь | Кто правит |
 |------|------|------------|
 | **SSOT maintainer** | `template-project/docs/rag/` | template-project |
-| **Vendored runtime** | `qa-guru-tms-automator/docs/rag/` | только через sync |
+| **Vendored runtime** | `autotests-ai-tms-automator/docs/rag/` | только через sync |
 | **ADR (002, 003)** | копируются в `docs/adr/` | sync вместе с RAG |
 
 Automator, bootstrap и agent **читают** vendored `docs/rag/` — не абсолютный путь к template-project.
@@ -42,7 +42,7 @@ test -d "${TEMPLATE_PROJECT_DIR:-/Users/stanislav/template-project}/docs/rag" \
 ### 2. Проверить drift (без записи)
 
 ```bash
-cd qa-guru-tms-automator
+cd autotests-ai-tms-automator
 python scripts/sync_rag_from_template_project.py --check
 ```
 

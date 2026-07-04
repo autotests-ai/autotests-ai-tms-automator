@@ -2,7 +2,7 @@
 """Probe which TestOps test-case UI blocks update live while the page stays open.
 
 Run:
-  cd qa-guru-tms-automator
+  cd autotests-ai-tms-automator
   PYTHONPATH=src pytest scripts/testops_live_ui_probe.py -v \\
     --alluredir=build/allure-results/testops-live-ui
   allure generate build/allure-results/testops-live-ui \\

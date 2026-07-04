@@ -1,6 +1,6 @@
-# QA Guru TMS Automator
+# Autotests AI TMS Automator
 
-GitHub: [qa-guru/qa-guru-tms-automator](https://github.com/qa-guru/qa-guru-tms-automator)
+GitHub: [autotests-ai/autotests-ai-tms-automator](https://github.com/autotests-ai/autotests-ai-tms-automator)
 
 Сервис мониторит смену workflow-статусов тест-кейсов в Allure TestOps и автоматизирует ручные тесты.
 

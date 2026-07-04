@@ -10,7 +10,7 @@ description: >-
 
 # Automate Manual Test → GitHub repo + CI
 
-Base: `qa-guru-tms-automator/` (канон skill — **только здесь**).
+Base: `autotests-ai-tms-automator/` (канон skill — **только здесь**).
 
 ## Architecture
 
@@ -54,7 +54,7 @@ Example: `qa_guru_automator_ethalon-5267` (project `5267`)
 
 0. **Resolve project context (обязательно при новом `project_id`):** не брать status/workflow id из README, `.env` или другого проекта.
    ```bash
-   cd qa-guru-tms-automator
+   cd autotests-ai-tms-automator
    python scripts/resolve_testops_project.py {project_id} --test-case-id {test_case_id}
    ```
    Используй вывод: `workflow.id`, `status_ids.automate_trigger`, `status_ids.automated_done`, `github.repo_name`.

@@ -31,7 +31,7 @@ related: [test-layers, test-pyramid]
 Sync script (automator):
 
 ```bash
-cd qa-guru-tms-automator
+cd autotests-ai-tms-automator
 python scripts/sync_testops_component_mappings.py --project-id 5271
 python scripts/sync_testops_component_mappings.py --list-components
 ```

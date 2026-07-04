@@ -1,1 +1,1 @@
-"""QA Guru TMS automator service."""
+"""Autotests AI TMS automator service."""

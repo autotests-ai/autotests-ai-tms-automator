@@ -4,9 +4,9 @@ WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    GIT_AUTHOR_NAME="QA Guru TMS Automator" \
+    GIT_AUTHOR_NAME="Autotests AI TMS Automator" \
     GIT_AUTHOR_EMAIL="automator@local" \
-    GIT_COMMITTER_NAME="QA Guru TMS Automator" \
+    GIT_COMMITTER_NAME="Autotests AI TMS Automator" \
     GIT_COMMITTER_EMAIL="automator@local"
 
 RUN apt-get update \

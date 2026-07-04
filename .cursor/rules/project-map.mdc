@@ -1,9 +1,9 @@
 ---
-description: Карта qa-guru-tms-automator — генератор e2e + vanilla UI
+description: Карта autotests-ai-tms-automator — генератор e2e + vanilla UI
 alwaysApply: true
 ---
 
-# qa-guru-tms-automator
+# autotests-ai-tms-automator
 
 TestOps → GitHub `autotests-cloud/{name}-{id}` → Selenoid CI → Allure 3 + allurectl.
 

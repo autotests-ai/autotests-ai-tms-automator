@@ -36,7 +36,7 @@ related: [test-pyramid]
 Sync script (automator):
 
 ```bash
-cd qa-guru-tms-automator
+cd autotests-ai-tms-automator
 python scripts/sync_testops_layer_mappings.py --project-id 5271,5267,5263
 python scripts/sync_testops_layer_mappings.py --list-mapping
 ```
