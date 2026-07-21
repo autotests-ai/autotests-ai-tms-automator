@@ -13,7 +13,7 @@ class Settings(BaseSettings):
         populate_by_name=True,
     )
 
-    allure_endpoint: str = "https://allure.autotests.cloud"
+    allure_endpoint: str = "https://allure.qa.guru"
     allure_api_token: str
     allure_api_prefix: str = "/api/rs"
 
@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     github_repo_public: bool = True
     github_template_dir: str = "templates/tests-java"
     github_projects_dir: str = "projects"
-    template_project_dir: str = "/Users/stanislav/template-project"
+    template_project_dir: str = "/Users/stanislav/zero-design-system"
     automation_ci_timeout_sec: int = 900
 
     def resolve_template_project_dir(self) -> Path:

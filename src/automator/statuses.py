@@ -1,4 +1,4 @@
-"""Workflow and status identifiers for allure.autotests.cloud."""
+"""Workflow and status identifiers for allure.qa.guru."""
 
 WORKFLOW_ID = 6
 

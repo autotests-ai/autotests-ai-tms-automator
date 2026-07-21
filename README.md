@@ -6,7 +6,7 @@ GitHub: [autotests-ai/autotests-ai-tms-automator](https://github.com/autotests-a
 
 ## Workflow и статусы
 
-Workflow **6** — «Ручные тесты» (`allure.autotests.cloud`).
+Workflow **6** — «Ручные тесты» (`allure.qa.guru`).
 
 | id | Название в UI / API |
 |----|---------------------|
@@ -43,7 +43,7 @@ Workflow **6** — «Ручные тесты» (`allure.autotests.cloud`).
 |------|------|
 | `templates/tests-java/` | **SSOT** e2e эталон (pyramid, visual, header, embed) + GitHub bootstrap (trim в automator) |
 | `templates/vanilla-ui/` | Static UI (login/header) для local и генерации HTML |
-| `docs/rag/` | Vendored RAG (SSOT maintainer: template-project) |
+| `docs/rag/` | Vendored RAG (SSOT maintainer: zero-design-system) |
 | `projects/{repo_name}/` | Локальная копия GitHub project repo |
 | `.cursor/skills/automate-manual-test` | Канон TestOps → Java (только здесь) |
 
@@ -59,11 +59,11 @@ cd templates/tests-java && gradle test -DincludeTags=smoke -DexcludeTags=visual
 ### Upload в TestOps (CI)
 
 Vars: `ALLURE_PROJECT_ID`, `ALLURE_ENDPOINT`; secret: `ALLURE_TOKEN`.  
-Workflow: `templates/tests-java/.github/workflows/selenoid-autotests-cloud_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`).
+Workflow: `templates/tests-java/.github/workflows/selenoid-qa-guru_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`).
 
 ```bash
 gh variable set ALLURE_PROJECT_ID --body 5267 -R autotests-cloud/qa_guru_automator_ethalon-5267
-gh variable set ALLURE_ENDPOINT --body https://allure.autotests.cloud -R autotests-cloud/qa_guru_automator_ethalon-5267
+gh variable set ALLURE_ENDPOINT --body https://allure.qa.guru -R autotests-cloud/qa_guru_automator_ethalon-5267
 gh secret set ALLURE_TOKEN -R autotests-cloud/qa_guru_automator_ethalon-5267
 ```
 
@@ -71,7 +71,7 @@ GitHub bootstrap: `prepare_bootstrap_workdir()` копирует `templates/test
 
 ### RAG (vendored)
 
-Maintainer: `template-project/docs/rag/`. Runtime: `docs/rag/`. Skill: `sync-rag`.
+Maintainer: `zero-design-system/docs/rag/`. Runtime: `docs/rag/`. Skill: `sync-rag`.
 
 ```bash
 python scripts/sync_rag_from_template_project.py          # обновить копию
