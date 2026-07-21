@@ -90,7 +90,7 @@ python -m pip install -e .
 
 ```bash
 gh variable set ALLURE_PROJECT_ID --body {project_id} -R autotests-cloud/{repo_name}
-gh variable set ALLURE_ENDPOINT --body https://allure.autotests.cloud -R autotests-cloud/{repo_name}
+gh variable set ALLURE_ENDPOINT --body https://allure.qa.guru -R autotests-cloud/{repo_name}
 gh secret set ALLURE_TOKEN -R autotests-cloud/{repo_name}
 ```
 
@@ -133,7 +133,7 @@ src/test/java/tests/
 - `.cursor/rules/rag-retrieval.mdc`
 - `.cursor/rules/java-e2e-tests.mdc`
 - `.cursor/rules/project-map.mdc`
-- RAG: `docs/rag/e2e/e2e-config-keys.md`, `test-taxonomy.md`
+- RAG: `docs/rag/config/e2e-config-keys.md`, `test-taxonomy.md`
 
 ## DoD
 

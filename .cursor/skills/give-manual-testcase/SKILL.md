@@ -98,7 +98,7 @@ python scripts/create_manual_testcase.py 5267 \
 ```markdown
 ## Ссылки
 
-- **TestOps:** [#{id}](https://allure.autotests.cloud/project/{project_id}/test-cases/{id})
+- **TestOps:** [#{id}](https://allure.qa.guru/project/{project_id}/test-cases/{id})
 - **Код автотеста:** появится после «✨ Автоматизировать» (ожидается `tests.LoginTests.methodNameTest`)
 - **GitHub Actions run:** появится после «✨ Автоматизировать»
 
