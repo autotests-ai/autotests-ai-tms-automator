@@ -241,26 +241,47 @@ class AllureTestOpsClient:
         project_id: int,
         test_case_id: int,
     ) -> int | None:
+        return self.find_launch_id_for_test_case(project_id, test_case_id, open_only=True)
+
+    def find_launch_id_for_test_case(
+        self,
+        project_id: int,
+        test_case_id: int,
+        *,
+        open_only: bool = False,
+    ) -> int | None:
+        """Newest launch whose name contains ``#{test_case_id}`` (open preferred)."""
         marker = f"#{test_case_id}"
+        closed_id: int | None = None
         page = 0
         while True:
             payload = self._get("/launch", projectId=project_id, page=page, size=50)
             for launch in payload.get("content", []):
-                if launch.get("closed"):
-                    continue
                 name = str(launch.get("name") or "")
-                if marker in name:
-                    return int(launch["id"])
+                if marker not in name or launch.get("id") is None:
+                    continue
+                launch_id = int(launch["id"])
+                if not launch.get("closed"):
+                    return launch_id
+                if closed_id is None:
+                    closed_id = launch_id
             if payload.get("last", True):
                 break
             page += 1
-        return None
+        return None if open_only else closed_id
 
-    def mark_automation_success_status(self, test_case_id: int) -> dict[str, Any] | None:
+    def mark_automation_success_status(
+        self,
+        test_case_id: int,
+        *,
+        test_layer_id: int | None = None,
+    ) -> dict[str, Any] | None:
         """Move testcase to automated workflow + «Автоматизировано с AI» after passed CI."""
         body: dict[str, Any] = {"statusId": self._settings.status_automated_ai_id}
         if self._settings.automated_workflow_id is not None:
             body["workflowId"] = self._settings.automated_workflow_id
+        if test_layer_id is not None:
+            body["testLayerId"] = test_layer_id
         if self._settings.dry_run:
             logger.info("DRY RUN: would mark test case %s automated success %s", test_case_id, body)
             return {"id": test_case_id, "dry_run": True, **body}
@@ -282,24 +303,74 @@ class AllureTestOpsClient:
         self,
         project_id: int,
         test_case_id: int,
+        *,
+        test_layer_id: int | None = None,
     ) -> dict[str, Any] | None:
-        """Close the latest open launch for a test case so TestOps marks it automated."""
-        launch_id = self.find_open_launch_id_for_test_case(project_id, test_case_id)
+        """Close the CI launch (if still open) and move the case to automated workflow."""
+        test_case = self.get_test_case(test_case_id)
+        if self._is_automation_finalized(test_case):
+            if test_layer_id is not None:
+                self.mark_automation_success_status(test_case_id, test_layer_id=test_layer_id)
+                test_case = self.get_test_case(test_case_id)
+            return {
+                "launch_id": None,
+                "launch_closed": True,
+                "automated": True,
+                "status_id": int((test_case.get("status") or {}).get("id", 0)),
+                "workflow_id": int((test_case.get("workflow") or {}).get("id", 0)),
+            }
+
+        launch_id = self.find_launch_id_for_test_case(project_id, test_case_id)
         if launch_id is None:
-            logger.info("No open launch found for test case #%s in project %s", test_case_id, project_id)
-            test_case = self.get_test_case(test_case_id)
-            if self._is_automation_finalized(test_case):
-                return {
-                    "launch_id": None,
-                    "launch_closed": True,
-                    "automated": True,
-                    "status_id": int((test_case.get("status") or {}).get("id", 0)),
-                    "workflow_id": int((test_case.get("workflow") or {}).get("id", 0)),
-                }
-            # CI (allurectl) often closes the launch before the poller finalizes.
-            # If results already marked automated — or we can set success status — finish here.
-            try:
-                updated = self.mark_automation_success_status(test_case_id)
+            logger.info("No launch found for test case #%s in project %s", test_case_id, project_id)
+            return self._finalize_without_open_launch(test_case_id, test_layer_id=test_layer_id)
+
+        launch = self._get(f"/launch/{launch_id}")
+        if not launch.get("closed"):
+            logger.info("Closing TestOps launch %s for #%s", launch_id, test_case_id)
+            if not self.close_launch(launch_id):
+                return None
+        else:
+            logger.info(
+                "Launch %s for #%s already closed — waiting for automated flag",
+                launch_id,
+                test_case_id,
+            )
+        return self._wait_for_automation_finalized(
+            launch_id, test_case_id, test_layer_id=test_layer_id
+        )
+
+    def _finalize_without_open_launch(
+        self,
+        test_case_id: int,
+        *,
+        test_layer_id: int | None = None,
+    ) -> dict[str, Any] | None:
+        try:
+            updated = self.mark_automation_success_status(
+                test_case_id, test_layer_id=test_layer_id
+            )
+        except Exception:
+            logger.exception("Failed to mark #%s automated without launch", test_case_id)
+            return None
+        if updated and self._is_automation_finalized(updated):
+            status = updated.get("status") or {}
+            workflow = updated.get("workflow") or {}
+            return {
+                "launch_id": None,
+                "launch_closed": True,
+                "automated": True,
+                "status_id": int(status.get("id", 0)),
+                "workflow_id": int(workflow.get("id", 0)),
+            }
+        # automated flag can lag briefly after CI close — poll then set status again
+        for _ in range(8):
+            time.sleep(2.0)
+            current = self.get_test_case(test_case_id)
+            if bool(current.get("automated")):
+                updated = self.mark_automation_success_status(
+                    test_case_id, test_layer_id=test_layer_id
+                )
                 if updated and self._is_automation_finalized(updated):
                     status = updated.get("status") or {}
                     workflow = updated.get("workflow") or {}
@@ -310,22 +381,15 @@ class AllureTestOpsClient:
                         "status_id": int(status.get("id", 0)),
                         "workflow_id": int(workflow.get("id", 0)),
                     }
-            except Exception:
-                logger.exception(
-                    "Failed to mark #%s automated after CI closed launch",
-                    test_case_id,
-                )
-            return None
-        if not self.close_launch(launch_id):
-            return None
-        return self._wait_for_automation_finalized(launch_id, test_case_id)
+        return None
 
     def _wait_for_automation_finalized(
         self,
         launch_id: int,
         test_case_id: int,
         *,
-        attempts: int = 10,
+        test_layer_id: int | None = None,
+        attempts: int = 15,
         delay_sec: float = 2.0,
     ) -> dict[str, Any] | None:
         test_case: dict[str, Any] = {}
@@ -333,6 +397,26 @@ class AllureTestOpsClient:
         for attempt in range(attempts):
             launch = self._get(f"/launch/{launch_id}")
             test_case = self.get_test_case(test_case_id)
+            if bool(launch.get("closed")) and bool(test_case.get("automated")):
+                try:
+                    updated = self.mark_automation_success_status(
+                        test_case_id, test_layer_id=test_layer_id
+                    )
+                    if updated and self._is_automation_finalized(updated):
+                        status = updated.get("status") or {}
+                        workflow = updated.get("workflow") or {}
+                        return {
+                            "launch_id": launch_id,
+                            "launch_closed": True,
+                            "automated": True,
+                            "status_id": int(status.get("id", 0)),
+                            "workflow_id": int(workflow.get("id", 0)),
+                        }
+                except Exception:
+                    logger.exception(
+                        "Failed to set automated success status for test case #%s",
+                        test_case_id,
+                    )
             if bool(launch.get("closed")) and self._is_automation_finalized(test_case):
                 status = test_case.get("status") or {}
                 workflow = test_case.get("workflow") or {}
@@ -345,25 +429,6 @@ class AllureTestOpsClient:
                 }
             if attempt + 1 < attempts:
                 time.sleep(delay_sec)
-
-        if bool(launch.get("closed")) and bool(test_case.get("automated")):
-            try:
-                updated = self.mark_automation_success_status(test_case_id)
-                if updated and self._is_automation_finalized(updated):
-                    status = updated.get("status") or {}
-                    workflow = updated.get("workflow") or {}
-                    return {
-                        "launch_id": launch_id,
-                        "launch_closed": True,
-                        "automated": True,
-                        "status_id": int(status.get("id", 0)),
-                        "workflow_id": int(workflow.get("id", 0)),
-                    }
-            except Exception:
-                logger.exception(
-                    "Failed to set automated success status for test case #%s",
-                    test_case_id,
-                )
 
         logger.warning(
             "Launch %s closed but test case #%s not finalized (automated=%s, workflow=%s, status=%s)",

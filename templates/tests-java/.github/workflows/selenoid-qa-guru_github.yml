@@ -150,12 +150,16 @@ jobs:
           fi
           set -e
 
+      # When TEST_CASE_ID is set, tms-automator closes the launch after CI so TestOps
+      # can flip manual → automated (workflow 5 / «Автоматизировано с AI»). Closing
+      # here races the poller and leaves automated=false.
       - name: Close TestOps launch
         if: >-
           always() &&
           steps.testops-upload.outcome == 'success' &&
           env.TEST_EXIT == '0' &&
-          env.TESTOPS_LAUNCH_URL != ''
+          env.TESTOPS_LAUNCH_URL != '' &&
+          env.TEST_CASE_ID == ''
         continue-on-error: true
         env:
           ALLURE_TOKEN: ${{ secrets.ALLURE_TOKEN }}

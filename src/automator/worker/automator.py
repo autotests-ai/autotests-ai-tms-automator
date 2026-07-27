@@ -183,7 +183,18 @@ class AutomationWorker:
             if finished.conclusion == "success":
                 processing = "failed"
                 try:
-                    finalized = self._client.finalize_automation_launch(project_id, test_case_id)
+                    e2e_layer_id: int | None = None
+                    try:
+                        from automator.testops.layer_sync import resolve_layer_id
+
+                        e2e_layer_id = resolve_layer_id(self._client, project_id, key="e2e")
+                    except Exception:
+                        logger.exception("Could not resolve E2E layer for #%s", test_case_id)
+                    finalized = self._client.finalize_automation_launch(
+                        project_id,
+                        test_case_id,
+                        test_layer_id=e2e_layer_id,
+                    )
                     if finalized:
                         logger.info(
                             "TestOps finalized for #%s: launch=%s automated=%s status=%s",
