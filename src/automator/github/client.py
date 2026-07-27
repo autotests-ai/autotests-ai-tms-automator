@@ -313,6 +313,30 @@ class GitHubClient:
         self._run(["git", "commit", "-m", commit_message], cwd=workdir, action="git commit")
         self._run(["git", "push", "origin", "main"], cwd=workdir, action=f"git push to {repo_full}")
 
+    def _latest_dispatch_run_id(self, repo_full: str) -> int | None:
+        result = self._run(
+            [
+                "gh",
+                "run",
+                "list",
+                "--workflow",
+                "selenoid-qa-guru_github.yml",
+                "-R",
+                repo_full,
+                "--event",
+                "workflow_dispatch",
+                "--limit",
+                "5",
+                "--json",
+                "databaseId",
+            ],
+            action=f"gh run list for {repo_full}",
+        )
+        runs = json.loads(result.stdout or "[]")
+        if not runs:
+            return None
+        return max(int(run["databaseId"]) for run in runs if run.get("databaseId") is not None)
+
     def dispatch_workflow(
         self,
         repo_name: str,
@@ -320,6 +344,7 @@ class GitHubClient:
         test_case_id: int | None = None,
     ) -> WorkflowRunInfo:
         repo_full = f"{self._org}/{repo_name}"
+        before_run_id = self._latest_dispatch_run_id(repo_full)
         cmd = ["gh", "workflow", "run", "selenoid-qa-guru_github.yml", "-R", repo_full]
         if test_class:
             cmd.extend(["-f", f"test_class={test_class}"])
@@ -338,26 +363,31 @@ class GitHubClient:
             "--event",
             "workflow_dispatch",
             "--limit",
-            "1",
+            "5",
             "--json",
             "databaseId,url,status,conclusion",
         ]
-        deadline = time.monotonic() + 60
+        # gh run list can briefly still show the previous completed dispatch —
+        # only accept a run newer than the pre-dispatch snapshot.
+        deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
             result = self._run(
                 list_cmd,
                 action=f"gh run list for {repo_full}",
             )
-            runs = json.loads(result.stdout)
-            if runs and runs[0].get("status") in {"queued", "in_progress", "completed", "waiting"}:
-                run = runs[0]
-                return WorkflowRunInfo(
-                    run_id=int(run["databaseId"]),
-                    run_url=run["url"],
-                    status=run["status"],
-                    conclusion=run.get("conclusion"),
-                    report_url=None,
-                )
+            runs = json.loads(result.stdout or "[]")
+            for run in runs:
+                run_id = int(run["databaseId"])
+                if before_run_id is not None and run_id <= before_run_id:
+                    continue
+                if run.get("status") in {"queued", "in_progress", "completed", "waiting"}:
+                    return WorkflowRunInfo(
+                        run_id=run_id,
+                        run_url=run["url"],
+                        status=run["status"],
+                        conclusion=run.get("conclusion"),
+                        report_url=None,
+                    )
             time.sleep(2)
 
         raise AutomationError(f"Timed out waiting for workflow_dispatch run in {repo_full}")

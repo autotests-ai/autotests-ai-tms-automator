@@ -322,6 +322,19 @@ class AllureTestOpsClient:
 
         launch_id = self.find_launch_id_for_test_case(project_id, test_case_id)
         if launch_id is None:
+            # Upload can lag a few seconds after GH Actions turns green.
+            for attempt in range(30):
+                time.sleep(2.0)
+                launch_id = self.find_launch_id_for_test_case(project_id, test_case_id)
+                if launch_id is not None:
+                    logger.info(
+                        "Found launch %s for #%s after %ss",
+                        launch_id,
+                        test_case_id,
+                        (attempt + 1) * 2,
+                    )
+                    break
+        if launch_id is None:
             logger.info("No launch found for test case #%s in project %s", test_case_id, project_id)
             return self._finalize_without_open_launch(test_case_id, test_layer_id=test_layer_id)
 

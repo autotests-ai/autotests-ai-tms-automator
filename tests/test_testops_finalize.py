@@ -126,8 +126,10 @@ class FinalizeAutomationLaunchTests(TestCase):
             "status": {"id": 13},
         }
 
-        result = self.client.finalize_automation_launch(5269, 47322)
+        with patch("automator.client.testops.time.sleep"):
+            result = self.client.finalize_automation_launch(5269, 47322)
 
+        self.assertGreaterEqual(find_launch.call_count, 2)
         mark_success.assert_called_with(47322, test_layer_id=None)
         self.assertIsNotNone(result)
         assert result is not None

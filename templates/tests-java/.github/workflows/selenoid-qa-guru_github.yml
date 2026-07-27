@@ -166,9 +166,15 @@ jobs:
         run: |
           LAUNCH_ID="${TESTOPS_LAUNCH_URL##*/}"
           echo "Closing TestOps launch ${LAUNCH_ID}"
+          # ALLURE_TOKEN is an API token — exchange for JWT (same as allurectl / automator).
+          ACCESS_TOKEN=$(curl -fsS -X POST "${ALLURE_ENDPOINT%/}/api/uaa/oauth/token" \
+            -H "Accept: application/json" \
+            -d "grant_type=apitoken" \
+            -d "scope=openid" \
+            -d "token=${ALLURE_TOKEN}" | python -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
           curl -fsS -X POST \
             "${ALLURE_ENDPOINT%/}/api/rs/launch/${LAUNCH_ID}/close" \
-            -H "Authorization: Bearer ${ALLURE_TOKEN}" \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
             -H "Accept: application/json"
           echo "TESTOPS_LAUNCH_CLOSED=true" >> "$GITHUB_ENV"
 

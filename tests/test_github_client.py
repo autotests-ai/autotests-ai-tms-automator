@@ -1,7 +1,33 @@
+import json
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from automator.github.client import GitHubClient
+
+
+class DispatchWorkflowTests(TestCase):
+    def setUp(self) -> None:
+        self.client = GitHubClient("autotests-cloud")
+
+    def test_dispatch_waits_for_run_newer_than_pre_dispatch_snapshot(self) -> None:
+        old_run = {"databaseId": 100, "url": "https://example/100", "status": "completed", "conclusion": "success"}
+        new_run = {"databaseId": 101, "url": "https://example/101", "status": "queued", "conclusion": None}
+
+        with patch.object(GitHubClient, "_run") as run:
+            run.side_effect = [
+                MagicMock(returncode=0, stdout=json.dumps([old_run]), stderr=""),  # before snapshot
+                MagicMock(returncode=0, stdout="", stderr=""),  # workflow run
+                MagicMock(returncode=0, stdout=json.dumps([old_run]), stderr=""),  # still old
+                MagicMock(returncode=0, stdout=json.dumps([new_run, old_run]), stderr=""),  # new appears
+            ]
+            with patch("automator.github.client.time.sleep"):
+                info = self.client.dispatch_workflow("demo-5298", test_class="tests.LoginTests.x", test_case_id=47326)
+
+        self.assertEqual(info.run_id, 101)
+        self.assertEqual(info.status, "queued")
+        dispatch_cmd = run.call_args_list[1].args[0]
+        self.assertEqual(dispatch_cmd[:4], ["gh", "workflow", "run", "selenoid-qa-guru_github.yml"])
+        self.assertIn("test_case_id=47326", dispatch_cmd)
 
 
 class GitHubPagesTests(TestCase):
