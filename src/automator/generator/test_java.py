@@ -131,8 +131,10 @@ def build_test_method(
 ) -> str:
     constant = page_constant or names.page_constant
     steps_joined = _build_step_blocks(step_bodies, constant, page_path, policy)
+    # CI workflow defaults to -DincludeTags=smoke; keep polarity tag as well.
     return f"""    @Test
     @AllureId("{test_case_id}")
+    @Tag("smoke")
     @Tag("{tag}")
     @DisplayName("{test_case_name}")
     void {names.method_name}() {{
