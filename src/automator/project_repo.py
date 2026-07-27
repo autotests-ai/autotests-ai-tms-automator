@@ -57,6 +57,10 @@ class ProjectRepositoryService:
             self._github.clone_repo(repo_name, workdir)
         return workdir
 
+    @staticmethod
+    def _workdir_bootstrapped(workdir: Path) -> bool:
+        return (workdir / "build.gradle").is_file() or (workdir / "build.gradle.kts").is_file()
+
     def testops_project_url(self, project_id: int) -> str:
         return f"{self._settings.allure_endpoint.rstrip('/')}/project/{project_id}/test-cases"
 
@@ -65,12 +69,6 @@ class ProjectRepositoryService:
 
     def ensure_repository(self, project_id: int) -> dict[str, Any]:
         existing = self._store.get_project_repo(project_id)
-        if existing and self._github.repo_exists(str(existing["repo_name"])):
-            repo_name = str(existing["repo_name"])
-            self.ensure_local_project(repo_name)
-            self._github.ensure_github_pages(repo_name)
-            return {**existing, "created": False}
-
         if existing:
             project_name = str(existing["project_name"])
             repo_name = str(existing["repo_name"])
@@ -79,22 +77,21 @@ class ProjectRepositoryService:
             project_name = str(project.get("name") or f"project-{project_id}")
             repo_name = build_repo_name(project_name, project_id)
 
+        workdir = self.project_workdir(repo_name)
         if self._github.repo_exists(repo_name):
             self.ensure_local_project(repo_name)
-            self._github.ensure_github_pages(repo_name)
-            repo_url = f"https://github.com/{self._settings.github_org}/{repo_name}"
-            record = {
-                "project_id": project_id,
-                "project_name": project_name,
-                "repo_name": repo_name,
-                "repo_url": repo_url,
-            }
-            self._store.save_project_repo(**record)
-            return {**record, "created": False}
+            if self._workdir_bootstrapped(workdir):
+                self._github.ensure_github_pages(repo_name)
+                record = {
+                    "project_id": project_id,
+                    "project_name": project_name,
+                    "repo_name": repo_name,
+                    "repo_url": f"https://github.com/{self._settings.github_org}/{repo_name}",
+                }
+                self._store.save_project_repo(**record)
+                return {**record, "created": False}
 
         description = f"UI autotests for Allure TestOps project {project_id} ({project_name})"
-        workdir = self.project_workdir(repo_name)
-
         repo_url = self._github.create_repo_from_template(
             repo_name=repo_name,
             template_dir=self._template_dir,

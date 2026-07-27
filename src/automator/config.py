@@ -65,6 +65,33 @@ class Settings(BaseSettings):
         """Vendored RAG inside automator — always read this path at runtime."""
         return repo_root / "docs" / "rag"
 
+    def resolve_path(self, configured: str, *, runtime_root: Path) -> Path:
+        """Absolute path as-is; relative paths resolve against runtime_root."""
+        path = Path(configured).expanduser()
+        if not path.is_absolute():
+            path = runtime_root / path
+        return path.resolve()
+
+
+def resolve_runtime_root(package_file: Path | None = None) -> Path:
+    """Directory that owns templates/, docs/, projects/.
+
+    Editable/dev layout: ``…/repo/src/automator/main.py`` → parents[2]=repo.
+    ``pip install`` in Docker puts the package under site-packages — then CWD
+    (WORKDIR=/app) or ``/app`` must be used, not parents[2].
+    """
+    here = (package_file or Path(__file__)).resolve()
+    candidates = [
+        Path.cwd(),
+        Path("/app"),
+        here.parents[2],  # repo root when running from src/ tree
+        here.parents[1],  # src/ when package_file is src/automator/*.py
+    ]
+    for root in candidates:
+        if (root / "templates" / "tests-java").is_dir() and (root / "docs" / "rag").is_dir():
+            return root.resolve()
+    return Path.cwd().resolve()
+
 
 @lru_cache
 def get_settings() -> Settings:

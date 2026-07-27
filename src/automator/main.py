@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 from automator.client.testops import AllureTestOpsClient
-from automator.config import get_settings
+from automator.config import get_settings, resolve_runtime_root
 from automator.statuses import STATUS_LABELS
 from automator.events.detector import TransitionDetector
 from automator.events.handlers import TransitionHandler
@@ -44,10 +44,18 @@ def main() -> None:
         handler = TransitionHandler(settings, store, client)
         watcher = StatusWatcher(settings, store, client, detector, handler)
 
-        repo_root = Path(__file__).resolve().parents[2]
-        template_dir = repo_root / settings.github_template_dir
-        projects_dir = repo_root / settings.github_projects_dir
-        rag_canon_dir = settings.resolve_rag_canon_dir(repo_root)
+        runtime_root = resolve_runtime_root(Path(__file__))
+        template_dir = settings.resolve_path(settings.github_template_dir, runtime_root=runtime_root)
+        projects_dir = settings.resolve_path(settings.github_projects_dir, runtime_root=runtime_root)
+        rag_canon_dir = settings.resolve_rag_canon_dir(runtime_root)
+        if not template_dir.is_dir():
+            raise SystemExit(
+                f"GITHUB_TEMPLATE_DIR not found: {template_dir} (runtime_root={runtime_root})"
+            )
+        if not rag_canon_dir.is_dir():
+            raise SystemExit(
+                f"RAG canon dir not found: {rag_canon_dir} (runtime_root={runtime_root})"
+            )
         projects_dir.mkdir(parents=True, exist_ok=True)
         github = GitHubClient(settings.github_org, repo_public=settings.github_repo_public)
         project_repo = ProjectRepositoryService(
@@ -56,11 +64,14 @@ def main() -> None:
         worker = AutomationWorker(settings, store, client, project_repo, github, rag_canon_dir)
 
         logger.info(
-            "Watcher started. Poll interval=%ss, projects=%s, dry_run=%s, github_org=%s",
+            "Watcher started. Poll interval=%ss, projects=%s, dry_run=%s, github_org=%s, "
+            "runtime_root=%s, template_dir=%s",
             settings.poll_interval_sec,
             settings.monitor_project_ids or "ALL",
             settings.dry_run,
             settings.github_org,
+            runtime_root,
+            template_dir,
         )
 
         while True:

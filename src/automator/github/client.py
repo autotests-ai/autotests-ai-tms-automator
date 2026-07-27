@@ -90,12 +90,61 @@ class GitHubClient:
         )
         return result.returncode == 0
 
+    def _branch_exists(self, repo_name: str, branch: str) -> bool:
+        repo_full = f"{self._org}/{repo_name}"
+        result = subprocess.run(
+            ["gh", "api", f"repos/{repo_full}/branches/{branch}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return result.returncode == 0
+
+    def ensure_gh_pages_branch(self, repo_name: str) -> None:
+        """Create ``gh-pages`` from ``main`` when missing (required before Pages enable)."""
+        repo_full = f"{self._org}/{repo_name}"
+        if self._branch_exists(repo_name, "gh-pages"):
+            return
+
+        main_ref = self._run(
+            ["gh", "api", f"repos/{repo_full}/git/ref/heads/main", "--jq", ".object.sha"],
+            action=f"resolve main SHA for {repo_full}",
+        )
+        sha = main_ref.stdout.strip()
+        if not sha:
+            raise AutomationError(f"Could not resolve main SHA for {repo_full}")
+
+        create = self._run(
+            [
+                "gh",
+                "api",
+                "--method",
+                "POST",
+                f"repos/{repo_full}/git/refs",
+                "-f",
+                "ref=refs/heads/gh-pages",
+                "-f",
+                f"sha={sha}",
+            ],
+            check=False,
+            action=f"create gh-pages branch for {repo_full}",
+        )
+        if create.returncode == 0:
+            logger.info("Created gh-pages branch for %s from main", repo_full)
+            return
+        detail = _command_detail(create).lower()
+        if "reference already exists" in detail or "already exists" in detail:
+            return
+        _raise_command_failed(create, f"create gh-pages branch for {repo_full}")
+
     def ensure_github_pages(self, repo_name: str) -> None:
         """Enable GitHub Pages from gh-pages branch (idempotent)."""
         repo_full = f"{self._org}/{repo_name}"
         if self.github_pages_enabled(repo_name):
             logger.debug("GitHub Pages already enabled for %s", repo_full)
             return
+
+        self.ensure_gh_pages_branch(repo_name)
 
         result = self._run(
             [
@@ -271,19 +320,19 @@ class GitHubClient:
         test_case_id: int | None = None,
     ) -> WorkflowRunInfo:
         repo_full = f"{self._org}/{repo_name}"
-        cmd = ["gh", "workflow", "run", "selenoid-autotests-cloud_github.yml", "-R", repo_full]
+        cmd = ["gh", "workflow", "run", "selenoid-qa-guru_github.yml", "-R", repo_full]
         if test_class:
             cmd.extend(["-f", f"test_class={test_class}"])
         if test_case_id is not None:
             cmd.extend(["-f", f"test_case_id={test_case_id}"])
-        self._run(cmd, action=f"gh workflow run selenoid-autotests-cloud_github.yml for {repo_full}")
+        self._run(cmd, action=f"gh workflow run selenoid-qa-guru_github.yml for {repo_full}")
 
         list_cmd = [
             "gh",
             "run",
             "list",
             "--workflow",
-            "selenoid-autotests-cloud_github.yml",
+            "selenoid-qa-guru_github.yml",
             "-R",
             repo_full,
             "--event",
