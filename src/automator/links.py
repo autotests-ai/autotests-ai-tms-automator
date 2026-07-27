@@ -183,7 +183,7 @@ def _find_ci_run(org: str, repo_name: str, test_case_id: int) -> tuple[str | Non
             "-R",
             repo_full,
             "--workflow",
-            "selenoid-autotests-cloud_github.yml",
+            "selenoid-qa-guru_github.yml",
             "--commit",
             sha,
             "--json",

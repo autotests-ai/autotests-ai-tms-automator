@@ -43,7 +43,7 @@ projects/{repo_name}/src/test/java/tests/
 
 ## CI
 
-GitHub Actions: `templates/tests-java/.github/workflows/selenoid-autotests-cloud_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`)
+GitHub Actions: `templates/tests-java/.github/workflows/selenoid-qa-guru_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`)
 
 ```bash
 ./gradlew test --tests tests.LoginTests.successfulAuthorizationTest -Denv=ci

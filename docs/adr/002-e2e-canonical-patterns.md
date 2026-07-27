@@ -7,18 +7,19 @@
 
 Фаза 4 template-project: переносимый эталон e2e для портирования на другие языки/стеки.
 
-Паттерны для retrieval вынесены в **`docs/rag/e2e/`** (`manifest.jsonl`). ADR фиксирует решение и scope; чанки — как реализовать.
+Паттерны для retrieval вынесены в **`docs/rag/config/`** и **`docs/rag/testing/`** (`manifest.jsonl`). ADR фиксирует решение и scope; чанки — как реализовать.
 
-Roadmap (`docs/CONTEXT.md`, `layout-standard.md`) упоминает **header smoke / visual tests**. Текущий `tests-java/` после очистки содержит **login-сценарии** на reference app [one-page-form](https://github.com/qa-guru/one-page-form), не header.
+Roadmap (`docs/CONTEXT.md`, `layout-standard.md`) упоминает **header smoke / visual tests**. Login e2e живёт в **`projects/one-page-form-home/one-page-form-app/`** (static `projects/one-page-form-home/one-page-form-app/frontend/login.html`, prod GitHub Pages one-page-form), не в autotests.ai landing.
 
 ## Решение
 
 ### Scope фазы 4a (этот ADR)
 
-1. **`tests-java/`** — единственный канон стиля и структуры e2e в template-project.
-2. **Target app:** `frontend/` — единый static root (`login.html`, `header.html`, …); prod `baseUrl` на GitHub Pages one-page-form.
-3. **Сценарии:** login e2e smoke в каноне; negative/ladder/logout patterns — ethalon `_ethalon/ladder/` + RAG (`test-style-ladder`, `test-logout-flow`, `test-negative`). Header smoke — **фаза 4b**, ADR `003`.
+1. **`projects/one-page-form-home/one-page-form-app/tests/`** — канон стиля и структуры login e2e в monorepo.
+2. **Target app:** `one-page-form-app/frontend/` — static root (`login.html`, `logged-in.html`, …); prod `baseUrl` на GitHub Pages one-page-form; local HTTP `:3000` из `frontend/`.
+3. **Сценарии:** login e2e smoke в каноне; negative/ladder/logout patterns — ethalon `_ethalon/ladder/` (если есть в consumer) + RAG (`test-style-ladder`, `test-logout-flow`, `test-negative`). Header smoke — **фаза 4b**, ADR `003`.
 4. **Testing pyramid (4.pyramid):** `@Layer` unit / component / integration / api / e2e / manual + CI slices (`testVisual`, …) — чанки `test-pyramid`, `test-api-layer` (ADR 004, 005).
+5. **`examples/java-spring/`** — CI snapshot generator output; login smoke смотрит на one-page-form-home, не дублирует канон.
 
 ### Слои (stack-agnostic)
 
@@ -35,7 +36,7 @@ Roadmap (`docs/CONTEXT.md`, `layout-standard.md`) упоминает **header sm
 
 Приоритет: `-DbaseUrl` / `baseUrl` в профиле → `-DbasePath` / `basePath`. Оба пустые — fail fast.
 
-Local HTTP: сервер из **`frontend/`**, `baseUrl=http://localhost:3000/`. PO: `open("/login.html")`, `open("/header.html")` — без отдельных path keys.
+Local HTTP: сервер из **`one-page-form-app/frontend/`**, `baseUrl=http://localhost:3000/`. PO: `open("/login.html")`, `open("/logged-in.html")` — без отдельных path keys. Component preview (`/components.html`, `/header.html`) — `design-system/preview/` на том же `:3000` или отдельный stand.
 
 **Один `./gradlew test` — один стенд** (`Configuration.baseUrl` в `@BeforeAll`). Smoke, screenshot baseline — отдельные прогоны / env-профили.
 
@@ -60,15 +61,15 @@ Local HTTP: сервер из **`frontend/`**, `baseUrl=http://localhost:3000/`.
 | `selenideLogToConsole` | `true` | Selenide SimpleReport |
 | `rootLogLevel` | `info` | SLF4J simple default level |
 | `enableAllureSelenideListener` | `false` | Auto-steps из Selenide в Allure |
-| `attachBrowserConsoleLogs`, `attachPageSource`, `attachLastScreenshot`, `attachHarLogs`, `attachVideo` | `false` | Артефакты в `@AfterEach` |
+| `attachBrowserConsoleLogs`, `attachPageSource`, `attachLastScreenshot`, `attachHarLogs`, `attachVideo` | `false` | Артефакты в `@AfterEach`; **e2e env** — `attachLastScreenshot=true` (см. `allure-reporting-requirements`) |
 
-**TestOps** (`ALLURE_ENDPOINT`, `ALLURE_TOKEN`, …) — env CI/runner и `allurectl`; в Java-тесты и `-D` не попадает; e2e-builder генерирует shell-блок `export ALLURE_*`.
+**TestOps** (`ALLURE_ENDPOINT`, `ALLURE_TOKEN`, …) — env CI/runner и `allurectl`; в Java-тесты и `-D` не попадает; autotests-builder генерирует shell-блок `export ALLURE_*`.
 
 Override: `-Dkey=value` или `-Denv=selenoid_local_e2e`.
 
 ## Паттерны (RAG)
 
-Индекс: [`docs/rag/README.md`](../rag/README.md). Чанки: `docs/rag/e2e/<id>.md`.
+Индекс: [`docs/rag/README.md`](../rag/README.md). Чанки: `docs/rag/config/<id>.md`, `docs/rag/testing/<id>.md`.
 
 | id | chunk |
 |----|-------|
@@ -85,34 +86,35 @@ Override: `-Dkey=value` или `-Denv=selenoid_local_e2e`.
 | `test-negative` | negative validation |
 | `test-storage-shortcut` | localStorage auth |
 | `allure-attach` | opt-in artifacts |
-| `allure-selenide-listener` | AllureSelenide global + per-test override |
+| `allure-reporting-requirements` | steps/attachments по @Layer + quality gate |
+| `allure-selenide-listener` | AllureSelenide global listener |
 | `remote-selenoid` | remote hub |
 | `visual-baseline` | visual baselines (header, login, logged-in) |
-| `test-pyramid` | testing pyramid — канон `tests-java/` |
+| `test-pyramid` | testing pyramid — канон `one-page-form-app/tests/` |
 | `test-manual` | exploratory vs TestOps `@Manual` |
 | `test-logout-flow` | logout patterns (RAG) |
 
 ## Split: канон vs учебная ladder (ethalon + RAG)
 
-| | `tests-java/` (канон) | `_ethalon/ladder/` + RAG |
+| | `one-page-form-app/tests/` (канон) | `_ethalon/ladder/` + RAG |
 |---|----------------------|--------------------------|
-| Назначение | CI, bootstrap, pyramid | учебные паттерны для e2e-builder |
-| `LoginTests` | 1 smoke PO + `@Manual` exploratory | full style ladder + negative — `src/test/java/_ethalon/ladder/LoginTests.java` |
-| `LogoutTests` | — | form + localStorage fluent — `src/test/java/_ethalon/ladder/LogoutTests.java` |
+| Назначение | CI, bootstrap login e2e | учебные паттерны для autotests-builder |
+| `LoginTests` | 1 smoke PO + `@Manual` exploratory | full style ladder + negative — ethalon ladder (consumer / archive) |
+| `LogoutTests` | form + localStorage fluent в каноне | ethalon variants — RAG `test-logout-flow` |
 | Manual | `@Manual` на методе в `LoginTests` exploratory | `shortLoginAuthorizationTest` TestOps — ethalon + чанк `test-manual` |
 | Gradle | `testE2e`, `./gradlew test` | `testLadderEthalon` only; `@Tag("ladder-ethalon")` excluded elsewhere; `@Tag("api")` → `testApi` only |
 
 ## Учебная градация в `LoginTests` (ethalon)
 
-Код: `tests-java/src/test/java/_ethalon/ladder/LoginTests.java`. Smoke-метод дублируется в каноне `tests/LoginTests.java`.
+Код ladder: ethalon `_ethalon/ladder/LoginTests.java` (RAG `test-style-ladder`). Smoke-метод — канон `one-page-form-app/tests/src/test/java/tests/LoginTests.java`.
 
 | Тест | Стиль | Зачем |
 |------|-------|-------|
 | `shouldLoginWithValidCredentials` | Page Object | Канон smoke: fluent PO + assert |
 | `wrongPasswordAuthorizationTest` | Raw inline `$()` | `stepsLocation=none`, listener global off |
-| `emptyPasswordAuthorizationTest` | Inline + nested `Allure.step` | `test_allure_step`, `block_nested` |
-| `emptyLoginAuthorizationTest` | Inline + `@EnableAllureSelenideListener` | `selenide_listener`, per-test ON, без ручных step |
-| `emptyLoginAndPasswordAuthorizationTest` | Raw inline + `@EnableAllureSelenideListener(false)` | per-test listener OFF (явный override) |
+| `emptyPasswordAuthorizationTest` | Inline + nested `Allure.step` | `test_allure_step`, `block_nested`; каждое действие и assert — в своём `Allure.step` |
+| `emptyLoginAuthorizationTest` | Inline + global listener | `selenide_listener`, `global_on`, без ручных step |
+| `emptyLoginAndPasswordAuthorizationTest` | Raw inline `$()` | `stepsLocation=none`, listener global off |
 | `shortLoginAuthorizationTest` | TestOps manual, только `Allure.step` | `@Manual`, `@AllureId`, без браузера |
 | Закомментированный `successfulAuthorizationTest` | Raw Selenide | «До PO» — baseline для сравнения |
 
@@ -125,8 +127,8 @@ Override: `-Dkey=value` или `-Denv=selenoid_local_e2e`.
 
 ## Последствия
 
-- Consumer bootstrap (`bootstrap-test-repo` skill) копирует структуру из `tests-java/README.md` + чанки `docs/rag/`.
-- Header e2e — ADR `003-header-smoke-e2e.md` (layout probes + behavioral smoke).
-- Visual baselines — cross-epic: `helpers/ScreenshotBaseline.java`, `@Tag("visual")`, флаг `updateBaselines`; чанк `visual-baseline`.
+- Consumer bootstrap (`bootstrap-test-repo` skill) копирует структуру из `one-page-form-app/tests/README.md` + чанки `docs/rag/`.
+- Header e2e — ADR `003-header-smoke-e2e.md` (layout probes + behavioral smoke на `design-system/preview/header.html`).
+- Visual baselines — cross-epic: `helpers/ScreenshotBaseline.java`, `@Tag("visual")`, флаг `updateBaselines`; чанк `visual-baseline`; эталоны в `one-page-form-app/tests/src/test/resources/screenshots/`.
 - Pyramid layer review + CI slice tasks — ADR `005-testing-pyramid-review.md`.
-- `project-map.mdc` / `skills-map.md`: фазы 4a ✓, 4.pyramid ✓, 4b — по ADR 003.
+- `core-scope.mdc` / `skills-map.md`: login canon → `projects/one-page-form-home/one-page-form-app/`; autotests.ai — landing only.

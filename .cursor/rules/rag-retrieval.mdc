@@ -14,7 +14,7 @@ alwaysApply: false
 autotests-ai-tms-automator/docs/rag/
 ```
 
-Это **vendored-копия**. SSOT maintainer — `template-project/docs/rag/` (правки только там).
+Это **vendored-копия**. SSOT maintainer — `zero-design-system/docs/rag/` (правки только там).
 
 Обновление копии:
 
@@ -42,7 +42,7 @@ Env `TEMPLATE_PROJECT_DIR` — только источник для sync-скр�
 | `cfg-env-profile` | `local.properties` / `ci.properties` |
 | `gen-python-policy` | Python automator: locators, tags, i18n (`gen-python-policy.json`) |
 
-Header-кейсы: + `docs/rag/e2e-header/hdr-selectors.md`, `hdr-behavior.md`.  
+Header-кейсы: + `docs/rag/testing-header/hdr-selectors.md`, `hdr-behavior.md`.  
 Visual: + `visual-baseline.md`.  
 Индекс: `docs/rag/manifest.jsonl`.
 
@@ -56,6 +56,6 @@ Visual: + `visual-baseline.md`.
 ## Don't
 
 - Не генерировать тесты без чтения `test-taxonomy` и `po-locators`.
-- Не править `docs/rag/` в automator вручную — sync из template-project.
-- Не править файлы в `template-project/` из automator-чата.
+- Не править `docs/rag/` в automator вручную — sync из zero-design-system.
+- Не править файлы в `zero-design-system/docs/rag/` из automator-чата.
 - Не дублировать ADR-текст в тестах — только паттерны из чанков.

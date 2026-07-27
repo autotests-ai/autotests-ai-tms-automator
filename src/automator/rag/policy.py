@@ -10,7 +10,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-_POLICY_REL = Path("e2e") / "gen-python-policy.json"
+_POLICY_REL = Path("config") / "gen-python-policy.json"
 _POLICY_CHUNK_ID = "gen-python-policy"
 
 

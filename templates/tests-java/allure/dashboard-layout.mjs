@@ -29,20 +29,20 @@ export function buildDashboardLayout({ epicCharts = [] } = {}) {
       layers: [...PYRAMID_LAYERS],
     },
     {
-      type: "stabilityDistribution",
-      title: TITLES.stabilityByComponent,
-      threshold: STABILITY_THRESHOLD,
-      skipStatuses: [...STABILITY_SKIP_STATUSES],
-      groupBy: "label-name:component",
+      type: "statusDynamics",
+      title: TITLES.statusDynamics,
+      limit: 20,
     },
     {
       type: "successRateDistribution",
       title: TITLES.successRateDistribution,
     },
     {
-      type: "statusDynamics",
-      title: TITLES.statusDynamics,
-      limit: 20,
+      type: "stabilityDistribution",
+      title: TITLES.stabilityByComponent,
+      threshold: STABILITY_THRESHOLD,
+      skipStatuses: [...STABILITY_SKIP_STATUSES],
+      groupBy: "label-name:component",
     },
     {
       type: "statusTransitions",

@@ -45,7 +45,10 @@
   width: auto;
   height: var(--header-brand-logo-height);
   max-height: var(--header-brand-logo-height);
-  transform: translateY(var(--space-1));
+  /* viewBox сдвинут по Y так, что бокс центрируется по оптическому центру
+     wordmark (буква A, y≈8.79), а не по геометрическому центру с хвостиком Q.
+     overflow: visible — чтобы нижняя планка эмблемы/хвост не обрезались. */
+  overflow: visible;
 }
 
 /* Step 3: nav */

@@ -178,13 +178,26 @@
     return new URL("dashboard-overrides.css", document.baseURI).href;
   }
 
-  function prepareDashboardHtml(html, dashboardUrl, overridesUrl) {
+  function getOverridesScriptUrl() {
+    const shellScript = document.querySelector('script[src*="allure-shell.js"]');
+    if (shellScript?.src) {
+      return new URL("dashboard-overrides.js", shellScript.src).href;
+    }
+    return new URL("dashboard-overrides.js", document.baseURI).href;
+  }
+
+  function prepareDashboardHtml(html, dashboardUrl, overridesUrl, overridesScriptUrl) {
     const dashboardBase = new URL("./", dashboardUrl).href;
     let patched = html.replace(BASE_SCRIPT_RE, "");
 
-    if (!patched.includes("dashboard-overrides")) {
+    if (!patched.includes("dashboard-overrides.css")) {
       const overrideTag = `<link rel="stylesheet" type="text/css" href="${overridesUrl}" data-dashboard-overrides>`;
       patched = patched.replace("</head>", `    ${overrideTag}\n</head>`);
+    }
+
+    if (!patched.includes("dashboard-overrides.js")) {
+      const scriptTag = `<script src="${overridesScriptUrl}" defer data-dashboard-overrides></script>`;
+      patched = patched.replace("</head>", `    ${scriptTag}\n</head>`);
     }
 
     if (!/<base\s/i.test(patched)) {
@@ -197,6 +210,7 @@
   async function loadDashboardFrame(frame, dashboardUrl) {
     const absoluteDashboardUrl = new URL(dashboardUrl, document.baseURI).href;
     const overridesUrl = getOverridesUrl();
+    const overridesScriptUrl = getOverridesScriptUrl();
 
     frame.dataset.dashboardUrl = absoluteDashboardUrl;
 
@@ -208,7 +222,7 @@
 
       const html = await response.text();
       frame.removeAttribute("src");
-      frame.srcdoc = prepareDashboardHtml(html, absoluteDashboardUrl, overridesUrl);
+      frame.srcdoc = prepareDashboardHtml(html, absoluteDashboardUrl, overridesUrl, overridesScriptUrl);
     } catch {
       frame.removeAttribute("srcdoc");
       frame.src = absoluteDashboardUrl;

@@ -10,10 +10,12 @@ def test_bootstrap_chunk_ids_are_stable():
 
 def test_load_bootstrap_context_from_fixture(tmp_path: Path):
     rag_dir = tmp_path / "docs" / "rag"
-    (rag_dir / "e2e").mkdir(parents=True)
-    (rag_dir / "e2e" / "test-taxonomy.md").write_text("---\nid: test-taxonomy\n---\n# Taxonomy")
+    (rag_dir / "testing").mkdir(parents=True)
+    (rag_dir / "testing" / "test-taxonomy.md").write_text(
+        "---\nid: test-taxonomy\n---\n# Taxonomy"
+    )
     (rag_dir / "manifest.jsonl").write_text(
-        '{"id":"test-taxonomy","path":"docs/rag/e2e/test-taxonomy.md","domain":"e2e","phase":"4a","tags":["pattern"]}\n'
+        '{"id":"test-taxonomy","path":"docs/rag/testing/test-taxonomy.md","domain":"testing","phase":"4a","tags":["pattern"]}\n'
     )
 
     chunks = resolve_chunks_by_ids(rag_dir, ["test-taxonomy"])

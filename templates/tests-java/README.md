@@ -3,11 +3,11 @@
 Selenide + JUnit 5 + Allure. **SSOT** e2e в `autotests-ai-tms-automator`.
 
 **Static root (local):** `templates/vanilla-ui/` — `python -m http.server 3000`.  
-**RAG:** [`docs/rag/e2e/`](../../docs/rag/e2e/), [`docs/rag/e2e-header/`](../../docs/rag/e2e-header/).  
+**RAG:** [`docs/rag/testing/`](../../docs/rag/testing/), [`docs/rag/testing-header/`](../../docs/rag/testing-header/).  
 **ADR:** [`docs/adr/002-e2e-canonical-patterns.md`](../../docs/adr/002-e2e-canonical-patterns.md), [`003-header-smoke-e2e.md`](../../docs/adr/003-header-smoke-e2e.md), [`004-fast-testops-warm-pool.md`](../../docs/adr/004-fast-testops-warm-pool.md).
 
 **GitHub bootstrap:** тот же каталог — automator копирует infra через `prepare_bootstrap_workdir()` (без e2e test classes, `pages/`, baselines).  
-**CI workflow:** `.github/workflows/selenoid-autotests-cloud_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`).
+**CI workflow:** `.github/workflows/selenoid-qa-guru_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`).
 
 ## Prerequisites
 
@@ -154,7 +154,7 @@ gradle test -DincludeTags=smoke -DexcludeTags=visual && gradle allureQualityGate
 gradle test -DallureQualityGate=true -DincludeTags=smoke -DexcludeTags=visual
 ```
 
-CI: шаг **Allure 3 quality gate** после Run app e2e tests; job fail при `TEST_EXIT≠0` или `QUALITY_GATE_EXIT≠0`. RAG: [`alr-quality-gate`](../../docs/rag/e2e/alr-quality-gate.md).
+CI: шаг **Allure 3 quality gate** после Run app e2e tests; job fail при `TEST_EXIT≠0` или `QUALITY_GATE_EXIT≠0`. RAG: [`alr-quality-gate`](../../docs/rag/analytics/alr-quality-gate.md).
 
 ## Env profiles
 
@@ -165,7 +165,7 @@ CI: шаг **Allure 3 quality gate** после Run app e2e tests; job fail пр
 | `one-page-form-local.properties` | `frontend/` HTTP + Selenoid hub |
 | `one-page-form-prod.properties` | GitHub Pages one-page-form (login only) |
 | `selenoid-local.properties` | Remote hub, prod URL |
-| `selenoid.autotests.cloud-prod.properties` | Cloud Selenoid |
+| `selenoid.qa.guru-prod.properties` | Cloud Selenoid |
 | `ci.properties` | GHA + Selenoid cloud, full Allure attachments (Run 3 diagnostic) |
 | `fast-testops.properties` | Co-located Jenkins + warm pool: lean browser, Allure minimal (Run 1/2) |
 
@@ -183,7 +183,7 @@ chmod +x scripts/testops-fast-launch.example.sh
 ./scripts/testops-fast-launch.example.sh
 ```
 
-См. [`docs/adr/004-fast-testops-warm-pool.md`](../../docs/adr/004-fast-testops-warm-pool.md), warm pool: `selenoid-home/warm-pool-orchestrator/`.
+См. [`docs/adr/004-fast-testops-warm-pool.md`](../../docs/adr/004-fast-testops-warm-pool.md), warm pool: `selenoid-home/selenoid-warm-pool/`.
 
 ## Config keys
 

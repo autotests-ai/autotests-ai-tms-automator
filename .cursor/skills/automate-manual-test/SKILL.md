@@ -59,7 +59,7 @@ Example: `qa_guru_automator_ethalon-5267` (project `5267`)
    ```
    Используй вывод: `workflow.id`, `status_ids.automate_trigger`, `status_ids.automated_done`, `github.repo_name`.
    Если `env_drift.workflow_id=true` — для **этого** проекта опирайся на API, не на `.env`.
-1. **RAG (обязательно):** rule `rag-retrieval.mdc` — `docs/rag/` (`test-taxonomy`, `po-locators`, `po-step`, `test-style-ladder`; header — `e2e-header/*`).
+1. **RAG (обязательно):** rule `rag-retrieval.mdc` — `docs/rag/` (`test-taxonomy`, `po-locators`, `po-step`, `test-style-ladder`; header — `testing-header/*`).
 2. Read manual case from TestOps (name, steps, expected).
 3. Infer `@Feature` and class (`LoginTests`, `RegistrationTests`, …).
 4. Name method from scenario (`successfulAuthorizationTest`).
@@ -67,7 +67,7 @@ Example: `qa_guru_automator_ethalon-5267` (project `5267`)
 6. If equivalent class exists in repo — append `@Test`; else create class with one method.
 7. Do **not** add `LoginTests.java` unless automating a login case.
 8. Rule: `.cursor/rules/java-e2e-tests.mdc`, `.cursor/rules/rag-retrieval.mdc`
-9. RAG: `docs/rag/e2e/` — config keys, locators, taxonomy
+9. RAG: `docs/rag/testing/` — config keys, locators, taxonomy
 
 ## Test structure (generated)
 
@@ -91,7 +91,7 @@ public class LoginTests extends TestBase {
 
 ## CI / TestOps
 
-Workflow: `templates/tests-java/.github/workflows/selenoid-autotests-cloud_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`).
+Workflow: `templates/tests-java/.github/workflows/selenoid-qa-guru_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`).
 
 ```bash
 ./gradlew test --tests tests.LoginTests.successfulAuthorizationTest -Denv=ci

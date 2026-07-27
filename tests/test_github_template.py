@@ -52,15 +52,14 @@ def test_prepare_bootstrap_workdir_copies_rag_bundle(tmp_path: Path):
     (source / "src/test/java/tests/TestBase.java").write_text("class TestBase {}")
     (source / "build.gradle").write_text("plugins {}")
 
-    (rag_source / "e2e").mkdir(parents=True)
-    (rag_source / "e2e-header").mkdir(parents=True)
-    (rag_source / "e2e/test-taxonomy.md").write_text("taxonomy")
-    (rag_source / "manifest.jsonl").write_text('{"id":"test-taxonomy","path":"docs/rag/e2e/test-taxonomy.md"}')
+    (rag_source / "testing").mkdir(parents=True)
+    (rag_source / "testing" / "test-taxonomy.md").write_text("taxonomy")
+    (rag_source / "manifest.jsonl").write_text('{"id":"test-taxonomy","path":"docs/rag/testing/test-taxonomy.md"}')
     (rag_source.parent / "adr").mkdir(parents=True)
     (rag_source.parent / "adr" / "002-e2e-canonical-patterns.md").write_text("adr")
 
     prepare_bootstrap_workdir(source, dest, rag_source=rag_source)
 
-    assert (dest / "docs/rag/e2e/test-taxonomy.md").read_text() == "taxonomy"
+    assert (dest / "docs/rag/testing/test-taxonomy.md").read_text() == "taxonomy"
     assert (dest / "docs/rag/manifest.jsonl").exists()
     assert (dest / "docs/adr/002-e2e-canonical-patterns.md").read_text() == "adr"

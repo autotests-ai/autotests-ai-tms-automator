@@ -45,14 +45,14 @@ Rules: `.cursor/rules/*.mdc`
 | Skill | Когда |
 |-------|--------|
 | `sync-agent-meta` | После паттерна — rules/skills/RAG |
-| `sync-rag` | Vendored `docs/rag/` из template-project |
+| `sync-rag` | Vendored `docs/rag/` из zero-design-system |
 
 ## RAG
 
 | | Путь |
 |---|------|
 | Runtime (agent + automator) | `docs/rag/` — vendored, коммитится |
-| Maintainer (SSOT) | `template-project/docs/rag/` |
+| Maintainer (SSOT) | `zero-design-system/docs/rag/` |
 | Sync | `python scripts/sync_rag_from_template_project.py` |
 | Skill | `sync-rag` |
 | Rule | `.cursor/rules/rag-retrieval.mdc` |

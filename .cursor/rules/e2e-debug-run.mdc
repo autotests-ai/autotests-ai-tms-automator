@@ -61,4 +61,4 @@ gradle test -Denv=local -DincludeTags=visual \
 - Default parallelism в `junit-platform.properties` — `1`; для отладки всегда переопределяй через `-D`.
 - `HeaderTests` — `@Execution(SAME_THREAD)`: методы внутри класса последовательны; 3 потока дают выигрыш при прогоне suite или нескольких классов.
 
-Канон конфига: ADR 002, `docs/rag/e2e/e2e-config-keys.md`.
+Канон конфига: ADR 002, `docs/rag/config/e2e-config-keys.md`.

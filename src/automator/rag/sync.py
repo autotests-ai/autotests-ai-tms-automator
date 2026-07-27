@@ -1,12 +1,10 @@
-"""Sync vendored RAG from template-project into this repo."""
+"""Sync vendored RAG from zero-design-system into this repo."""
 
 from __future__ import annotations
 
 import shutil
 from pathlib import Path
 
-_RAG_SUBDIRS = ("e2e", "e2e-header")
-_RAG_ROOT_FILES = ("manifest.jsonl", "README.md")
 _ADR_FILES = (
     "002-e2e-canonical-patterns.md",
     "003-header-smoke-e2e.md",
@@ -16,20 +14,9 @@ _ADR_FILES = (
 def copy_rag_bundle(rag_source: Path, dest_repo_root: Path) -> None:
     """Copy canonical RAG chunks (+ ADR 002/003) into a consumer repo root."""
     rag_dest = dest_repo_root / "docs" / "rag"
-    rag_dest.mkdir(parents=True, exist_ok=True)
-
-    for subdir in _RAG_SUBDIRS:
-        source = rag_source / subdir
-        if source.is_dir():
-            target = rag_dest / subdir
-            if target.exists():
-                shutil.rmtree(target)
-            shutil.copytree(source, target)
-
-    for filename in _RAG_ROOT_FILES:
-        source = rag_source / filename
-        if source.is_file():
-            shutil.copy2(source, rag_dest / filename)
+    if rag_dest.exists():
+        shutil.rmtree(rag_dest)
+    shutil.copytree(rag_source, rag_dest)
 
     adr_source = rag_source.parent / "adr"
     adr_dest = dest_repo_root / "docs" / "adr"
@@ -45,7 +32,7 @@ def template_rag_source(template_project_dir: Path) -> Path:
 
 
 def sync_rag_from_template(template_project_dir: Path, repo_root: Path) -> Path:
-    """Refresh vendored docs/rag from template-project SSOT."""
+    """Refresh vendored docs/rag from zero-design-system SSOT."""
     source = template_rag_source(template_project_dir)
     if not source.is_dir():
         raise FileNotFoundError(f"RAG source missing: {source}")

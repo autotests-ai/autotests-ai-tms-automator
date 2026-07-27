@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (design). Warm pool wiring — PoC in `selenoid-home/warm-pool-orchestrator/`.
+Accepted (design). Warm pool wiring — PoC in `selenoid-home/selenoid-warm-pool/`.
 
 ## Context
 
@@ -52,7 +52,7 @@ Run 3 (diag):  -Denv=ci (+ VNC/cold Selenoid опционально)
 
 ## Warm pool integration (MVP)
 
-Orchestrator: `selenoid-home/warm-pool-orchestrator/` (`:9090`).
+Orchestrator: `selenoid-home/selenoid-warm-pool/` (`:9090`).
 
 ```
 Jenkins trigger
@@ -99,7 +99,7 @@ Implement fast TestOps UI test launch per ADR 004 in autotests-ai-tms-automator 
 1. Timeline: cold GHA path vs warm co-located path (trigger → first assert).
 2. Wire `TestBase` / custom WebDriverProvider for `-Dwarm_driver=true` + reserved session.
 3. Optional `-Dpreopen_url`: skip Selenide `open()` when current URL matches.
-4. Jenkins: integrate `selenoid-home/warm-pool-orchestrator/scripts/jenkins-preopen.example.sh`.
+4. Jenkins: integrate `selenoid-home/selenoid-warm-pool/scripts/jenkins-preopen.example.sh`.
 5. Lean image tweaks: `webdriver-image` entrypoint — no Xvfb when `WARM_VIDEO=false`.
 6. Document risks: stale state (`/warm/reset` vs BrowserSessionHelper), preopen/Gradle race, slot affinity.
 
@@ -120,5 +120,5 @@ Implement fast TestOps UI test launch per ADR 004 in autotests-ai-tms-automator 
 ## References
 
 - `templates/tests-java/src/test/resources/config/fast-testops.properties`
-- `selenoid-home/warm-pool-orchestrator/README.md`
+- `selenoid-home/selenoid-warm-pool/README.md`
 - `.cursor/skills/automate-manual-test/SKILL.md` — `@AllureId`, TestOps finalize

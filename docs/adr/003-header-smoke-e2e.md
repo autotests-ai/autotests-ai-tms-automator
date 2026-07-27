@@ -6,20 +6,20 @@
 
 ### Status update (2026-07)
 
-Канон CI **не** использует harness PO (`HeaderTests`, `HeaderPreviewPage`, `HeaderComponent`, `HeaderLayout`). Header покрыт:
+Канон CI **не** использует preview PO (`HeaderTests`, `HeaderPreviewPage`, `HeaderComponent`, `HeaderLayout`). Header покрыт:
 
 - **component** — `LangToggleTests` на `components.html`
 - **integration** — `LoginEmbedTests` на `login.html` (embed, фаза 6)
 
-`frontend/header.html` — preview/playground only. RAG scope: `hdr-scope-4b`. Структура ниже — historical reference для legacy audit.
+`projects/design-system-home/design-system/preview/header.html` — preview/playground only. RAG scope: `hdr-scope-4b`. Структура ниже — historical reference для legacy audit.
 
 ## Контекст
 
-Фаза **4b** — header smoke на `frontend/header.html` (harness) в template-project. Фаза **4a** (login на one-page-form) завершена; ADR 002 фиксирует общие слои e2e, но не header.
+Фаза **4b** — header smoke на `projects/design-system-home/design-system/preview/header.html` (preview) в template-project. Фаза **4a** (login на one-page-form) завершена; ADR 002 фиксирует общие слои e2e, но не header.
 
 В `tests-java/legacy-code/` лежат AI-generated тесты против **consumer** one-page-form: поведение header, layout probes, screenshot diff, landing/dashboard. Селекторы и DOM **не совпадают** с каноном template-project (`templates/header.html`).
 
-Нужно зафиксировать scope и assertions до реализации. Паттерны для retrieval: **`docs/rag/e2e-header/`**.
+Нужно зафиксировать scope и assertions до реализации. Паттерны для retrieval: **`docs/rag/testing-header/`**.
 
 ## Решение
 
@@ -27,12 +27,12 @@
 
 | Параметр | Канон |
 |----------|-------|
-| Target page | `frontend/header.html` (harness; gallery — `header-examples.html`) |
-| Target app root | `http://localhost:3000/` — сервер cwd = `frontend/` (см. `local_e2e.properties`) |
+| Target page | `projects/design-system-home/design-system/preview/header.html` (preview; gallery — `header-examples.html`) |
+| Target app root | `http://localhost:3000/` — сервер cwd = consumer static root / design-system `preview/` (см. `local_e2e.properties`) |
 | Breakpoint | **768px** — `docs/layout-standard.md` |
 | Viewports для smoke | **390**, **768**, **1280** (edge: 769 desktop, 768 mobile) |
 | Epic Allure | **`Template Header`** — не смешивать с `@Epic("One Page Form")` |
-| Чат / PR | Только header e2e; login-тесты и `frontend/css/header.css` не трогать без запроса |
+| Чат / PR | Только header e2e; login-тесты и `projects/design-system-home/design-system/css/header.css` не трогать без запроса |
 
 ### Стратегия assertions (порядок внедрения)
 
@@ -53,7 +53,7 @@
 
 ### Селекторы (template-project, не legacy)
 
-Источник правды: `templates/header.html`, `frontend/js/header.js`.
+Источник правды: `templates/header.html`, `projects/design-system-home/design-system/js/header.js`.
 
 | Роль | `data-testid` |
 |------|----------------|
@@ -90,7 +90,7 @@ tests-java/src/test/java/
 ├── pages/
 │   ├── components/
 │   │   └── HeaderComponent.java # locators + @Step theme/lang/layout
-│   └── HeaderPreviewPage.java   # open harness /header.html → HeaderComponent
+│   └── HeaderPreviewPage.java   # open preview /header.html → HeaderComponent
 └── tests/
     └── HeaderTests.java         # @Epic Template Header, @Tag smoke layout
 ```
@@ -99,7 +99,7 @@ Screenshot helper (visual): `helpers/ScreenshotBaseline.java` — **общий**
 
 ### Config
 
-- Профиль `local_e2e` (и sibling suffixes): `baseUrl=http://localhost:3000/`, сервер cwd = `frontend/`.
+- Профиль `local_e2e` (и sibling suffixes): `baseUrl=http://localhost:3000/`, сервер cwd = consumer static root / `preview/`.
 - Login и header: `./gradlew test -Denv=local_e2e -DincludeTags=smoke -DexcludeTags=visual`; PO — `open("/login.html")`, `open("/header.html")`.
 - Приоритет base URL — как в ADR 002 (`cfg-base-url`).
 
@@ -114,14 +114,14 @@ Screenshot helper (visual): `helpers/ScreenshotBaseline.java` — **общий**
 
 ## Паттерны (RAG)
 
-Индекс: [`docs/rag/README.md`](../rag/README.md). Чанки: `docs/rag/e2e-header/<id>.md`.
+Индекс: [`docs/rag/README.md`](../rag/README.md). Чанки: `docs/rag/testing-header/<id>.md`.
 
 | id | chunk |
 |----|-------|
 | `hdr-scope-4b` | scope, viewports, 4b.1 / 4b.2 |
 | `hdr-selectors` | data-testid template-project |
 | `hdr-legacy-audit` | таблица legacy-code |
-| `hdr-target` | baseUrl / open header harness |
+| `hdr-target` | baseUrl / open header preview |
 | `hdr-behavior` | theme, lang, href smoke |
 | `hdr-layout-gap` | gap 16px на .header__inner |
 | `hdr-layout-bp` | nav hide ≤768 |
