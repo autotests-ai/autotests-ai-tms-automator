@@ -296,6 +296,25 @@ class AllureTestOpsClient:
                     "status_id": int((test_case.get("status") or {}).get("id", 0)),
                     "workflow_id": int((test_case.get("workflow") or {}).get("id", 0)),
                 }
+            # CI (allurectl) often closes the launch before the poller finalizes.
+            # If results already marked automated — or we can set success status — finish here.
+            try:
+                updated = self.mark_automation_success_status(test_case_id)
+                if updated and self._is_automation_finalized(updated):
+                    status = updated.get("status") or {}
+                    workflow = updated.get("workflow") or {}
+                    return {
+                        "launch_id": None,
+                        "launch_closed": True,
+                        "automated": True,
+                        "status_id": int(status.get("id", 0)),
+                        "workflow_id": int(workflow.get("id", 0)),
+                    }
+            except Exception:
+                logger.exception(
+                    "Failed to mark #%s automated after CI closed launch",
+                    test_case_id,
+                )
             return None
         if not self.close_launch(launch_id):
             return None

@@ -72,6 +72,17 @@ def has_allure_id(existing: ExistingTestClass, test_case_id: int) -> bool:
     return str(test_case_id) in existing.allure_ids
 
 
+def method_name_for_allure_id(content: str, test_case_id: int) -> str | None:
+    """Return Java method name annotated with ``@AllureId("<id>")``, if present."""
+    pattern = (
+        rf'@AllureId\("{test_case_id}"\)\s*'
+        r"(?:@\w+(?:\([^)]*\))?\s*)*"
+        r"void\s+(\w+)\s*\("
+    )
+    match = re.search(pattern, content, flags=re.MULTILINE)
+    return match.group(1) if match else None
+
+
 def rename_class(content: str, new_class_name: str) -> str:
     return re.sub(
         r"public class \w+ extends TestBase",

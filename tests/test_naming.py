@@ -6,6 +6,7 @@ from automator.generator.java_tests import (
     ensure_static_imports,
     find_equivalent_class,
     load_existing_test_classes,
+    method_name_for_allure_id,
     normalize_class_file,
     resolve_target_class,
 )
@@ -71,6 +72,19 @@ public class SignInTests extends TestBase {
         merged = append_method(self.SAMPLE_CLASS, method)
         self.assertIn("existingTest", merged)
         self.assertIn("newTest", merged)
+
+    def test_method_name_for_allure_id(self) -> None:
+        content = """
+    @Test
+    @AllureId("47322")
+    @Tag("smoke")
+    @Tag("positive")
+    @DisplayName("Успешный логин")
+    void successfulLoginTest() {
+    }
+"""
+        self.assertEqual(method_name_for_allure_id(content, 47322), "successfulLoginTest")
+        self.assertIsNone(method_name_for_allure_id(content, 1))
 
     def test_ensure_static_imports_adds_fail(self) -> None:
         method = '        step("x", () -> fail("missing"));'

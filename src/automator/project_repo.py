@@ -4,12 +4,13 @@ from typing import Any
 
 from automator.client.testops import AllureTestOpsClient
 from automator.config import Settings
-from automator.errors import AutomationError, RepositoryNotFoundError
+from automator.errors import RepositoryNotFoundError
 from automator.generator.java_tests import (
     append_method,
     ensure_static_imports,
     has_allure_id,
     load_existing_test_classes,
+    method_name_for_allure_id,
     normalize_class_file,
     resolve_method_name,
     resolve_target_class,
@@ -116,14 +117,25 @@ class ProjectRepositoryService:
         workdir: Path,
         generated: GeneratedTest,
         test_case_id: int,
-    ) -> tuple[str, str, TestNames, list[str]]:
+    ) -> tuple[str, str, TestNames, list[str], bool]:
+        """Return ``(relative_path, content, names, remove_paths, already_present)``."""
         existing_classes = load_existing_test_classes(self.tests_dir(workdir))
         existing_match, canonical_class_name = resolve_target_class(existing_classes, generated.names)
 
         if existing_match and has_allure_id(existing_match, test_case_id):
-            raise AutomationError(
-                f"TestOps #{test_case_id} already automated in {existing_match.class_name}"
+            method = method_name_for_allure_id(existing_match.content, test_case_id)
+            names = generated.names
+            if method:
+                from dataclasses import replace
+
+                names = replace(names, method_name=method, class_name=existing_match.class_name)
+            relative_path = f"src/test/java/tests/{existing_match.class_name}.java"
+            logger.info(
+                "TestOps #%s already present in %s — skipping push",
+                test_case_id,
+                existing_match.class_name,
             )
+            return relative_path, existing_match.content, names, [], True
 
         names = resolve_method_name(existing_match, generated.names, test_case_id)
         remove_paths: list[str] = []
@@ -149,7 +161,7 @@ class ProjectRepositoryService:
             old_relative = existing_match.file_path.relative_to(workdir).as_posix()
             if old_relative != relative_path:
                 remove_paths.append(old_relative)
-            return relative_path, content, names, remove_paths
+            return relative_path, content, names, remove_paths, False
 
         content = build_test_class_file(
             names=names,
@@ -160,7 +172,7 @@ class ProjectRepositoryService:
             tag=generated.tag,
             policy=load_generator_policy(self._rag_canon_dir),
         )
-        return names.relative_path, content, names, remove_paths
+        return names.relative_path, content, names, remove_paths, False
 
     def push_generated_test(
         self,
@@ -202,9 +214,11 @@ class ProjectRepositoryService:
         test_case_id: int,
         message: str,
     ) -> str:
-        relative_path, content, names, remove_paths = self._materialize_test(
+        relative_path, content, names, remove_paths, already_present = self._materialize_test(
             workdir, generated, test_case_id
         )
+        if already_present:
+            return names.qualified_test_name
         self._github.push_test_file(
             repo_name=repo_name,
             workdir=workdir,

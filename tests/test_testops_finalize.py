@@ -102,3 +102,31 @@ class FinalizeAutomationLaunchTests(TestCase):
         assert result is not None
         self.assertEqual(result["launch_id"], None)
         self.assertEqual(result["status_id"], 13)
+
+    @patch.object(AllureTestOpsClient, "mark_automation_success_status")
+    @patch.object(AllureTestOpsClient, "find_open_launch_id_for_test_case", return_value=None)
+    @patch.object(AllureTestOpsClient, "get_test_case")
+    def test_finalize_marks_success_when_ci_already_closed_launch(
+        self,
+        get_test_case: MagicMock,
+        find_launch: MagicMock,
+        mark_success: MagicMock,
+    ) -> None:
+        get_test_case.return_value = {
+            "automated": False,
+            "workflow": {"id": 6},
+            "status": {"id": 17},
+        }
+        mark_success.return_value = {
+            "automated": True,
+            "workflow": {"id": 5},
+            "status": {"id": 13},
+        }
+
+        result = self.client.finalize_automation_launch(5269, 47322)
+
+        mark_success.assert_called_once_with(47322)
+        self.assertIsNotNone(result)
+        assert result is not None
+        self.assertEqual(result["status_id"], 13)
+        self.assertTrue(result["automated"])
