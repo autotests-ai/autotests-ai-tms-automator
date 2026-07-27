@@ -75,7 +75,7 @@ public class SignInTests extends TestBase {
     def test_ensure_static_imports_adds_fail(self) -> None:
         method = '        step("x", () -> fail("missing"));'
         merged = ensure_static_imports(self.SAMPLE_CLASS, method)
-        self.assertIn("import static com.codeborne.selenide.Selenide.fail;", merged)
+        self.assertIn("import static org.junit.jupiter.api.Assertions.fail;", merged)
 
     def test_normalize_class_name(self) -> None:
         normalized = normalize_class_file(self.SAMPLE_CLASS, "LoginTests")

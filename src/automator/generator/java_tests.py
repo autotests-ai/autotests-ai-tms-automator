@@ -89,7 +89,7 @@ def append_method(content: str, method_block: str) -> str:
 
 
 _STATIC_IMPORTS_BY_NEEDLE: tuple[tuple[str, str], ...] = (
-    ("fail(", "import static com.codeborne.selenide.Selenide.fail;"),
+    ("fail(", "import static org.junit.jupiter.api.Assertions.fail;"),
     ("not(cssClass", "import static com.codeborne.selenide.Condition.not;"),
     ("cssClass(", "import static com.codeborne.selenide.Condition.cssClass;"),
 )
