@@ -35,15 +35,19 @@ Skill: `sync-allurerc-ethalon`. ADR: `006-allurerc-mjs-ethalon`. См. такж�
 - modules: `quality-gate`, `categories`, `awesome-charts`, `dashboard-layout`, `constants`
 - history / known path defaults
 
-## Инвариант: testing pyramid
+## Инвариант: locked 2×2
 
-Обязательно в **обоих** `charts` и `layout`:
+Обязательно в **обоих** `charts` и `layout` (indices 0–3):
 
-- index **0** = `currentStatus`
-- index **1** = `testingPyramid`
-- `layers`: `["unit", "component", "integration", "api", "e2e", "manual"]`
+```
+[0] currentStatus      [1] durationDynamics
+[2] testingPyramid     [3] durations (groupBy: layer)
+```
 
-`visual` — **не** layer. Удаление пирамиды — только по явному запросу.
+- `testingPyramid.layers`: `["unit", "component", "integration", "api", "e2e", "manual"]`
+- `visual` — **не** layer
+- Удаление пирамиды / слом quad — только по явному запросу
+- Тайлы после index 3 — не закреплены
 
 ## Assert
 
@@ -51,4 +55,4 @@ Skill: `sync-allurerc-ethalon`. ADR: `006-allurerc-mjs-ethalon`. См. такж�
 node generators/ethalon/tests-java/scripts/validate-allurerc.mjs path/to/allurerc.mjs
 ```
 
-После sync: import OK; `./gradlew allureQualityGate` / `allureReport` с `--config allurerc.mjs`; pyramid на 2-м месте.
+После sync: import OK; `./gradlew allureQualityGate` / `allureReport` с `--config allurerc.mjs`; locked 2×2 на местах.
