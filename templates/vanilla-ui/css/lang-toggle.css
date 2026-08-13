@@ -7,9 +7,9 @@
 
 .lang-toggle__label {
   position: absolute;
-  bottom: 5px;
-  right: 5px;
-  font-size: 8px;
+  bottom: var(--lang-label-inset);
+  right: var(--lang-label-inset);
+  font-size: var(--lang-label-font-size);
   font-weight: 600;
   line-height: 1;
   pointer-events: none;
