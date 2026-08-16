@@ -27,8 +27,8 @@ Visual slice — через input `env_profile={env_base}_visual`, не отде
 
 | Ethalon | Stand | Consumer reference |
 |---------|-------|-------------------|
-| `reference_github-pyramid.yml` | reference ci + prod pyramid | `projects/reference-home/reference-app/` |
-| `reference_github-build-backend.yml` | backend bootJar + Docker image | `projects/reference-home/reference-app/` |
+| `ethalon_github-pyramid.yml` | reference ci + prod pyramid | `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/` |
+| `ethalon_github-build-backend.yml` | backend bootJar + Docker image | `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/` |
 | `selenoid-qa-guru_github.yml` | app e2e на Pages + cloud hub | tms-automator |
 | `selenoid_github-orchestrator.yml` | hub stack (Go + Java) | selenoid-home/selenoid-tests |
 
@@ -45,9 +45,9 @@ Visual slice — через input `env_profile={env_base}_visual`, не отде
 
 **Build** — compile/package (Gradle `bootJar`, `docker compose build`, static sync). **Test** — `@Layer` slices. Не смешивать: pyramid может вызвать `compose up --build` как setup, но release-image SSOT — build-workflow.
 
-### `reference_github-build-backend.yml`
+### `ethalon_github-build-backend.yml`
 
-SSOT: `projects/reference-home/reference-app/.github/workflows/reference_github-build-backend.yml`
+SSOT: `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/.github/workflows/ethalon_github-build-backend.yml`
 
 | Step | Назначение |
 |------|------------|
@@ -57,7 +57,7 @@ SSOT: `projects/reference-home/reference-app/.github/workflows/reference_github-
 | upload-artifact | `backend/build/libs/*.jar` |
 | optional push | `vars.DOCKER_IMAGE` + `secrets.DOCKER_REGISTRY_TOKEN` (skip on PR) |
 
-Сibling (future): `reference_github-build-static.yml` — wire-ui + static artifact / GitHub Pages, когда frontend станет отдельным deployable.
+Сibling (future): `ethalon_github-build-static.yml` — wire-ui + static artifact / GitHub Pages, когда frontend станет отдельным deployable.
 
 Microservice split: `backend-api_github-build.yml` в repo сервиса; pyramid/orchestrator остаётся в tests/app repo.
 
@@ -90,7 +90,7 @@ GRADLE_ARGS=(
 )
 ```
 
-Параллелизм — **`junit.jupiter.execution.parallel.enabled=false`** (Selenide thread-local). `reference_github-pyramid` prod-pyramid: то же на `testE2e`; `*_prod_e2e` — `closeBrowserAfterEach=true`.
+Параллелизм — **`junit.jupiter.execution.parallel.enabled=false`** (Selenide thread-local). `ethalon_github-pyramid` prod-pyramid: то же на `testE2e`; `*_prod_e2e` — `closeBrowserAfterEach=true`.
 
 Не дублировать ключи из `selenoid-qa-guru_github_e2e.properties`.
 

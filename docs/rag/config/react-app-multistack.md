@@ -1,15 +1,15 @@
 ---
-id: react-app-reference
+id: react-app-multistack
 domain: config
 phase: 9.react-pilot
-tags: [react, spa, vite, spring, pwa, reference-app, consumer]
+tags: [react, spa, vite, spring, pwa, autotests-ai-multistack-app, consumer]
 related: [react-toolchain, frontend-artifacts, 007-react-component-library]
 ---
-# reference-app React SPA (topology memo)
+# autotests-ai-multistack-app React SPA (topology memo)
 
-**id:** `react-app-reference`  
+**id:** `react-app-multistack`  
 **ADR:** [007-react-component-library](../../adr/007-react-component-library.md) — Phase 5 (consumer migration)  
-**Zone:** `projects/reference-home/reference-app/` (nested clone, own git)
+**Zone:** `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/` (nested clone, own git)
 
 Первый consumer, мигрированный с server-rendered HTML на React SPA поверх library `@zero-design-system/react`. Backend не меняет роль: Spring Boot отдаёт статику и REST `/api/*`.
 
@@ -56,7 +56,7 @@ Header markup и burger — SSOT в `design-system/js/header.js`. Consumer ре�
 - `App.tsx` — `<AppHeader />` над `<Routes>`
 - `index.html` — только `#root`; script inject делает `AppHeader`
 
-Demo pilot (`packages/react-ui/demo/reference-app/`) — тот же embed, не локальный JSX header.
+Demo pilot (`packages/react-ui/demo/multistack/`) — тот же embed, не локальный JSX header.
 
 ## SPA fallback
 

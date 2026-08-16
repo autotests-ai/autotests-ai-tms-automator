@@ -119,7 +119,7 @@ test: {
 
 | Label | Значение | Примечание |
 |-------|----------|------------|
-| `ALLURE_LABEL_epic` | `<app-name>` | `selenoid-ui` \| `reference-app` \| `react-ui` |
+| `ALLURE_LABEL_epic` | `<app-name>` | `selenoid-ui` \| `autotests-ai-multistack-app` \| `react-ui` |
 | `ALLURE_LABEL_layer` | `component` | общий уровень пирамиды |
 | `ALLURE_LABEL_scope` | `react` | отличает от Java/Selenide (`browser`) |
 | `ALLURE_LABEL_framework` | `react-testing-library` | никогда не сокращать |
@@ -163,7 +163,7 @@ selenoid-ui/ui — **reference example исключительно для RTL →
 
 | Поле | Значение |
 |------|----------|
-| Epic | `react-ui` (pilot) / `selenoid-ui` / `reference-app` (consumers) |
+| Epic | `react-ui` (pilot) / `selenoid-ui` / `autotests-ai-multistack-app` (consumers) |
 | Layer | `component` (общий с Java `@Layer("component")`) |
 | scope | `react` (React Testing Library) / `browser` (Java Selenide) |
 | framework | `react-testing-library` / `selenide` |
@@ -234,7 +234,7 @@ public class TestBase { ... }
 
 **Не затронуты:** `ApiTestBase` (не extends `TestBase`) и unit-тесты — остаются без `scope`/`framework`.
 
-Locations: `stacks/java-spring/tests/src/test/java/annotations/` (канон) + синхронизировано в `projects/reference-home/reference-app/tests/`.
+Locations: `stacks/java-spring/tests/src/test/java/annotations/` (канон) + синхронизировано в `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/tests/`.
 
 Проверено на `LangToggleTests` (`./gradlew testComponent --tests "*LangToggle*" -DallureReportMode=allure3`) — в `build/allure-results/*-result.json`:
 
@@ -285,6 +285,6 @@ Locations: `stacks/java-spring/tests/src/test/java/annotations/` (канон) + 
 
 v3 pilot (2026-07-13): `AppHeader` embed + `FilterInput` on library `Input`; design-system static in `ui/public/` (`scripts/sync-design-system-static.sh`). RTL suite **32 tests** green.
 
-v3.3 (2026-07-13): `Status.js` on library `Badge`; `rxjs-hooks` removed from Capabilities/Sessions/Videos delete hooks. reference-app consumer `HomePage.tsx` uses `Badge` for health status (`health-status-badge`).
+v3.3 (2026-07-13): `Status.js` on library `Badge`; `rxjs-hooks` removed from Capabilities/Sessions/Videos delete hooks. autotests-ai-multistack-app consumer `HomePage.tsx` uses `Badge` for health status (`health-status-badge`).
 
 **Deferred → v3+ (НЕ делать в v2):**

@@ -3,11 +3,11 @@ id: hdr-burger-menu
 domain: testing-header
 phase: 9.react-pilot
 tags: [header, burger, mobile, integration, mount, fixture]
-related: [hdr-scope-4b, react-app-reference]
+related: [hdr-scope-4b, react-app-multistack]
 ---
 # Header burger menu — SSOT tests (design-system-home)
 
-Механика мобильного бургер-меню покрывается **в design-system SSOT**, не в consumer `reference-app/tests`.
+Механика мобильного бургер-меню покрывается **в design-system SSOT**, не в consumer `autotests-ai-multistack-app/tests`.
 
 ## Target
 
@@ -35,7 +35,7 @@ related: [hdr-scope-4b, react-app-reference]
 
 ## Consumer
 
-`reference-app/tests` — только `HeaderActiveNavTests` (route-driven active nav в SPA). Burger e2e в consumer **не** дублировать.
+`autotests-ai-multistack-app/tests` — только `HeaderActiveNavTests` (route-driven active nav в SPA). Burger e2e в consumer **не** дублировать.
 
 ## Run
 

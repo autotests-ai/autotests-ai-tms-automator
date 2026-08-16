@@ -22,10 +22,10 @@ related: [005-pyramid-gradle-tasks]
 | component | `tests/component/*Tests` (`LangToggleTests`, `PrimitiveSizeTests`) | `/components.html` |
 | integration | `LoginFormTests`, `LoginEmbedTests` | `/login.html` mount + embed |
 | api | `tests/api/*Tests` | Rest Assured HTTP (`hubUrl` / `apiBaseUrl`) |
-| e2e | `LoginTests`, `LoginBaselineTests`, `LoggedInBaselineTests` (one-page-form) / `WelcomePanelBaselineTests` (reference-app) | login flow; pixel diff — только при slice `visual` |
+| e2e | `LoginTests`, `LoginBaselineTests`, `LoggedInBaselineTests` (one-page-form) / `WelcomePanelBaselineTests` (Multistack) | login flow; pixel diff — только при slice `visual` |
 | manual | `@Layer("manual")` + `@Manual` на **методе** в `LoginTests` | exploratory stubs (`@Tag("manual")` на методе) |
 
-Login: `LoginFormTests` + `LoginEmbedTests` (integration) → `LoginTests` (e2e smoke) → `LoginBaselineTests` + post-auth visual (**visual slice**, `@Layer("e2e")`): reference-app — `WelcomePanelBaselineTests` (`welcome-panel` на `/`); one-page-form — `LoggedInBaselineTests` (`logged-in.html`, ADR 002).  
+Login: `LoginFormTests` + `LoginEmbedTests` (integration) → `LoginTests` (e2e smoke) → `LoginBaselineTests` + post-auth visual (**visual slice**, `@Layer("e2e")`): autotests-ai-multistack-app — `WelcomePanelBaselineTests` (`welcome-panel` на `/`); one-page-form — `LoggedInBaselineTests` (`logged-in.html`, ADR 002).  
 Header: `LangToggleTests` (component) + `LoginEmbedTests` (integration embed); preview `/header.html` — не target автотестов.
 
 ## CI slice / env profile (не `@Layer`)
@@ -51,7 +51,7 @@ Visual = `@Layer("e2e")` + `@Tag("visual")` + `local_visual` / `testVisual` — 
 | `testUnit` | `--tests 'helpers.*Test' config.*Test` + `-Denv=local_unit` (auto skip health check) |
 | `testComponent` | `-Denv=local_component -DincludeTags=component` |
 | `testIntegration` | `-Denv=local_integration -DincludeTags=layout,mount` |
-| `testApi` | `-Denv=local_api -DincludeTags=api` (hub: `-DpyramidStand=selenoid_local`) |
+| `testApi` | `-Denv=selenoid_local_api` (or stand prefix `-Denv=selenoid_local`) |
 | `testE2e` | `-Denv=local_e2e -DincludeTags=smoke -DexcludeTags=visual` |
 | `testVisual` | `-Denv=local_visual -DincludeTags=visual` |
 | `testManual` | `-Denv=local_manual -DincludeTags=manual` |
@@ -59,9 +59,9 @@ Visual = `@Layer("e2e")` + `@Tag("visual")` + `local_visual` / `testVisual` — 
 ```bash
 ./gradlew testUnit
 ./gradlew testE2e
-./gradlew testApi -DpyramidStand=selenoid_local   # selenoid_local_api.properties
+./gradlew testApi -Denv=selenoid_local   # selenoid_local_api.properties
 ./gradlew testVisual -DupdateBaselines=true
-./gradlew testE2e -DpyramidStand=one-page-form_prod   # → one-page-form_prod_e2e.properties
+./gradlew testE2e -Denv=one-page-form_prod   # → one-page-form_prod_e2e.properties
 ```
 
 TestOps mapping (`e2e` → E2E Tests, не UI Tests) — чанк **`test-layers`**. Visual в TestOps остаётся **E2E Tests** (`@Layer("e2e")` на классе).

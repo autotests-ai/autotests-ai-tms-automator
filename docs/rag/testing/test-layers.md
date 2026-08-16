@@ -67,7 +67,7 @@ Runnable-файл в consumer = имя ethalon (`selenoid-qa-guru_github.yml`). 
 | `qa_guru_automator_ethalon-5267` | qa_guru_automator_ethalon-5267 Tests | qa_guru_automator_ethalon-5267 Tests |
 | `one-page-form-tests-java` | one-page-form-tests-java Tests | one-page-form-tests-java Tests |
 | `selenoid-tests` | selenoid-tests Tests | selenoid-tests Tests |
-| `reference-app` | reference-app Tests | reference-app Tests |
+| `autotests-ai-multistack-app` | Multistack Tests | Multistack Tests |
 
 Не путать с `allurerc.name` (отчёт) и Test Layer (`e2e` → **E2E Tests** в TestOps).
 

@@ -18,9 +18,9 @@ tags: [visual, baseline]
 | `helpers/ScreenshotBaseline.java` | capture + compare + write baseline |
 | `config/TestConfig.java` | `updateBaselines`, `baselinesDir`, `visualDiffThreshold` |
 | `tests/LoginBaselineTests.java` | login form (`@Epic("Authentication")` / one-page-form: `@Epic("One Page Form")`) |
-| `tests/WelcomePanelBaselineTests.java` | reference-app: `[data-testid='welcome-panel']` на `/` после login |
+| `tests/WelcomePanelBaselineTests.java` | Multistack: `[data-testid='welcome-panel']` на `/` после login |
 | `tests/LoggedInBaselineTests.java` | one-page-form: welcome на `/logged-in.html` (ADR 002) |
-| `tests/e2e/HomeLayoutBaselineTests.java` | `@Epic("Home")` — home на `/` (layout reference-app) |
+| `tests/e2e/HomeLayoutBaselineTests.java` | `@Epic("Home")` — home на `/` (layout Multistack) |
 | `src/test/resources/screenshots/{area}/` | baseline PNG (`login`, `welcome-panel`, `home-layout`; one-page-form: + `logged-in`) |
 
 Header-специфика (селекторы, viewports preview) — чанк `hdr-visual-opt`.
@@ -35,7 +35,7 @@ Header-специфика (селекторы, viewports preview) — чанк `
 
 ## Assert
 
-pixel diff ratio ≤ `visualDiffThreshold` (default `0.015`); размер PNG не меняется. CI: compare-only — без baseline PNG тест **FAIL** (не auto-record). **reference-app SSOT:** baselines сняты на Linux headless Chrome 148 (`reference_visual_baselines.yml`).
+pixel diff ratio ≤ `visualDiffThreshold` (default `0.015`); размер PNG не меняется. CI: compare-only — без baseline PNG тест **FAIL** (не auto-record). **autotests-ai-multistack-app SSOT:** baselines сняты на Linux headless Chrome 148 (`reference_visual_baselines.yml`).
 
 ## Allure attachments (`{area}-{viewport}`)
 
@@ -55,10 +55,10 @@ pixel diff ratio ≤ `visualDiffThreshold` (default `0.015`); размер PNG �
 
 - Отдельный test-класс на visual (`*BaselineTests`), не смешивать с `@Tag("smoke")` / `@Tag("layout")`; на классе `@Layer("e2e")`, slice — `@Tag("visual")` + `testVisual` / `*_visual` (чанк `test-pyramid`)
 - Один `@Test` — один screenshot assert (не layout probe + screenshot)
-- Baselines: reference-app — `screenshots/login/`, `screenshots/welcome-panel/`, `screenshots/home-layout/`; one-page-form — `screenshots/login/`, `screenshots/logged-in/` (ADR 002)
-- reference-app: login → `/` → crop `[data-testid='welcome-panel']`; one-page-form — welcome на `/logged-in.html`; localStorage shortcut — `test-storage-shortcut`
+- Baselines: autotests-ai-multistack-app — `screenshots/login/`, `screenshots/welcome-panel/`, `screenshots/home-layout/`; one-page-form — `screenshots/login/`, `screenshots/logged-in/` (ADR 002)
+- Multistack: login → `/` → crop `[data-testid='welcome-panel']`; one-page-form — welcome на `/logged-in.html`; localStorage shortcut — `test-storage-shortcut`
 - Запуск suite: `./gradlew test -DincludeTags=visual` (`@Tag("visual")`); перезапись — `-DupdateBaselines=true`
-- Allure Suites: class-level `@Suite` + `@SubSuite("visual")` → `Login > visual`, `Welcome panel > visual` (reference-app); one-page-form — `Logged-in > visual`
+- Allure Suites: class-level `@Suite` + `@SubSuite("visual")` → `Login > visual`, `Welcome panel > visual` (Multistack); one-page-form — `Logged-in > visual`
 
 ## Don't
 

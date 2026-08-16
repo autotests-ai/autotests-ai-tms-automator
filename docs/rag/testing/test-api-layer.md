@@ -33,7 +33,7 @@ hubUrl=http://127.0.0.1:4444/
 
 ```bash
 ./gradlew testApi
-./gradlew testApi -DpyramidStand=selenoid_local   # selenoid_local_api.properties
+./gradlew testApi -Denv=selenoid_local   # selenoid_local_api.properties
 ./gradlew test -Denv=selenoid_github_api -DincludeTags=api -DskipHealthCheck=true
 ```
 
