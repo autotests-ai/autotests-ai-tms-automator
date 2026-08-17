@@ -183,7 +183,7 @@ chmod +x scripts/testops-fast-launch.example.sh
 ./scripts/testops-fast-launch.example.sh
 ```
 
-См. [`docs/adr/004-fast-testops-warm-pool.md`](../../docs/adr/004-fast-testops-warm-pool.md), warm pool: `selenoid-home/selenoid-warm-pool/`.
+См. [`docs/adr/004-fast-testops-warm-pool.md`](../../docs/adr/004-fast-testops-warm-pool.md), warm pool: `selenoid-home/selenoid-pool/`.
 
 ## Config keys
 
