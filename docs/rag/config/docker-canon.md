@@ -17,10 +17,10 @@ SSOT: `docs/docker/DOCKER-CANON.md` · prod reboot: `docs/docker/prod-reboot.md`
 |------|------|
 | `docs/docker/DOCKER-CANON.md` | Hub — версии, блоки, команды |
 | `docs/docker/prod-reboot.md` | Prod VM reboot policy |
-| `stacks/java-spring/docker-compose.yml` | Template с `{{DB_*}}`, `{{HTTP_PORT}}` |
-| `stacks/java-spring/docker-compose.prod.yml` | Prod override (`restart: unless-stopped`) |
-| `stacks/java-spring/backend/Dockerfile` | Multi-stage temurin 21 |
-| `stacks/java-spring/backend/.dockerignore` | Lean build context |
+| `projects/autotests-ai-multistack-home/ethalon/docker-compose.yml` | Default-cell compose |
+| `projects/autotests-ai-multistack-home/ethalon/docker-compose.prod.yml` | Prod override (`restart: unless-stopped`) |
+| `projects/autotests-ai-multistack-home/ethalon/backend/java/backend-java-spring/Dockerfile` | Multi-stage temurin 21 |
+| `projects/autotests-ai-multistack-home/ethalon/backend/java/backend-java-spring/.dockerignore` | Lean build context |
 | `projects/reference-home/dev/docker-compose.yml` | Dev nginx proxy |
 | `projects/selenoid-home/dev/` | Selenoid hub (native binary, не compose) |
 

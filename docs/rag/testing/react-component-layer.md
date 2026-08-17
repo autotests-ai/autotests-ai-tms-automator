@@ -234,7 +234,7 @@ public class TestBase { ... }
 
 **Не затронуты:** `ApiTestBase` (не extends `TestBase`) и unit-тесты — остаются без `scope`/`framework`.
 
-Locations: `stacks/java-spring/tests/src/test/java/annotations/` (канон) + синхронизировано в `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/tests/`.
+Locations: `projects/autotests-ai-multistack-home/ethalon/tests/java/tests-java-gradle-junit5-allure3-selenide/src/test/java/annotations/` (канон) + синхронизировано в live clone `tests/`.
 
 Проверено на `LangToggleTests` (`./gradlew testComponent --tests "*LangToggle*" -DallureReportMode=allure3`) — в `build/allure-results/*-result.json`:
 
