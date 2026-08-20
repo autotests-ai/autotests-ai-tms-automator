@@ -4,9 +4,9 @@
   --link: #2c2a26;
   --link-hover: #2d5a4a;
   --focus: rgba(32, 174, 227, 0.25);
-  --color-bg: #f5f0e8;
-  --color-surface: #2c2a26;
-  --color-surface-soft: #383530;
+  --color-bg: #ffffff;
+  --color-surface: #151414;
+  --color-surface-soft: #262523;
   --color-text-inverse: #f5f0e8;
   --header-border: rgba(255, 255, 255, 0.1);
   --header-muted: rgba(255, 255, 255, 0.45);
