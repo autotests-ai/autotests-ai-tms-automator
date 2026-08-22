@@ -30,13 +30,13 @@ related: [react-toolchain, 007-react-component-library]
 |------|---------|
 | `package.json` (root workspaces) | workspace config |
 | `package-lock.json` | reproducible CI (`npm ci`) |
-| `packages/react-ui/src/**` | source |
-| `packages/react-ui/package.json` | package manifest |
+| `projects/design-system-home/react-ui/src/**` | source |
+| `projects/design-system-home/react-ui/package.json` | package manifest |
 
 ## Не коммитить
 
-- Любой `node_modules/` в root или packages
-- `packages/react-ui/dist/` после `npm run build`
+- Любой `node_modules/` в root или `react-ui`
+- `projects/design-system-home/react-ui/dist/` после `npm run build`
 - Локальные `.env` с secrets
 
 ## Безопасная очистка
@@ -50,7 +50,7 @@ npm run clean:frontend
 Ручная очистка при раздувании диска:
 
 ```bash
-rm -rf node_modules packages/*/node_modules
+rm -rf node_modules projects/design-system-home/react-ui/node_modules
 npm ci
 ```
 

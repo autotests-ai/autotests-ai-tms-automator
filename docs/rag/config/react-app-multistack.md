@@ -2,117 +2,120 @@
 id: react-app-multistack
 domain: config
 phase: 9.react-pilot
-tags: [react, spa, vite, spring, pwa, autotests-ai-multistack-app, consumer]
-related: [react-toolchain, frontend-artifacts, 007-react-component-library]
+tags: [react, spa, vite, spring, pwa, multistack, consumer]
+related: [react-toolchain, frontend-artifacts, 007-react-component-library, pwa-baseline]
 ---
-# autotests-ai-multistack-app React SPA (topology memo)
+# Multistack React SPA (topology memo)
 
 **id:** `react-app-multistack`  
 **ADR:** [007-react-component-library](../../adr/007-react-component-library.md) — Phase 5 (consumer migration)  
-**Zone:** `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/` (nested clone, own git)
+**Ethalon (SSOT):** `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/`  
+**Live clone:** `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/` (nested git)  
+**Pair URL:** [backend-java-spring / frontend-typescript-react](https://autotests.ai/stack/backend-java-spring/frontend-typescript-react/)
 
-Первый consumer, мигрированный с server-rendered HTML на React SPA поверх library `@zero-design-system/react`. Backend не меняет роль: Spring Boot отдаёт статику и REST `/api/*`.
+Teaching cell is a **split** SPA + API: nginx routes `/stack/{backend}/{frontend}/` to the frontend container; `/api/*` on the same pair goes to the backend. There is no `frontend-react/` directory and no Vite `outDir` into Spring `static/`.
 
 ## Topology
 
 | Слой | Путь |
 |------|------|
-| Frontend SPA | `frontend-react/` — Vite 6 + React 19 + react-router-dom 7 |
-| Backend | `backend/` — Spring Boot, REST `/api/*` + раздача статики |
-| Build output | `backend/src/main/resources/static/` (Vite `outDir`) |
-| Design-system embed | тот же static dir: `css/`, `js/`, `templates/` (materialized `sync-app-static.sh`) |
+| Frontend SPA | `frontend/typescript/frontend-typescript-react/` — Vite 8 + React 19 + react-router-dom 7 (pins: `react-toolchain`) |
+| Module vendor | `vendor/react-ui/` — alias `@zero-design-system/react`; `vendor/ds/` — tokens/primitives (`src/styles.ts`, Dockerfile `COPY vendor/ds`). Not `projects/design-system-home/react-ui` from the module. |
+| Sync hub | `frontend/_shared/` — kit for `sync-react-ui.sh` / `sync-ds-runtime.sh` fan-out into each module `vendor/`. Not runtime: no Vite alias, no Docker COPY. |
+| Backend API | `backend/java/backend-java-spring/` — Spring Boot REST `/api/*` only |
+| Tests | `tests/java/tests-java-gradle-junit5-allure3-selenide/` |
+| Live pair | `/stack/backend-java-spring/frontend-typescript-react/` |
 
-Vite `outDir` указывает **в** backend static с `emptyOutDir: false` — static dir общий с design-system embed, preview-каталогом и allure-shell, стирать нельзя. Стабильные (без hash) имена ассетов держат committed diff чистым:
+Vite `base` is `./` so one `dist` works under the nested `/stack/…/` mount. `pinMountAssets` rewrites injected `./assets/*` into `document.write` against the absolute mount. `outDir` is **`dist`**, `emptyOutDir: true`.
 
 ```ts
-build: {
-  outDir: resolve(__dirname, '../backend/src/main/resources/static'),
-  emptyOutDir: false,
-  rollupOptions: { output: {
-    entryFileNames: 'assets/[name].js',
-    chunkFileNames: 'assets/[name].js',
-    assetFileNames: 'assets/[name][extname]',
-  } },
-}
+const reactUiSrc = resolve(__dirname, 'vendor/react-ui/src/index.ts');
+
+export default defineConfig({
+  base: './',
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+    alias: { '@zero-design-system/react': reactUiSrc },
+  },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    rolldownOptions: { output: {
+      entryFileNames: 'assets/[name].js',
+      chunkFileNames: 'assets/[name].js',
+      assetFileNames: 'assets/[name][extname]',
+    } },
+  },
+});
 ```
+
+Vite 8 бандлит Rolldown: `build.rollupOptions` deprecated → **`build.rolldownOptions`**.
 
 ## Alias `@zero-design-system/react`
 
-Vite resolve alias напрямую на исходники library (не на dist) — pilot без publish:
+Ethalon alias points at this module's `vendor/react-ui` (fan-out from hub `frontend/_shared/frontend-react-ui`, which syncs from `projects/design-system-home/react-ui` via `frontend/scripts/sync-react-ui.sh`). Vite does not alias `_shared`. `dedupe: ['react', 'react-dom']` — otherwise two Reacts → "Invalid hook call".
 
-```ts
-resolve: { alias: {
-  '@zero-design-system/react': resolve(__dirname, '../../../../packages/react-ui/src/index.ts'),
-} }
-```
-
-Primitive CSS доставляется как peer-embed: `sync-app-static.sh` materializes `css/js/templates` из design-system в static, React импортирует классы, не переписывает дизайн в CSS-in-JS (ADR 007 §1).
+Primitive CSS is not rewritten in CSS-in-JS (ADR 007). The SPA imports tokens/primitives from `vendor/ds/css/` in `src/styles.ts`. The frontend Dockerfile copies `vendor/ds` into nginx html next to Vite `dist`.
 
 ## AppHeader embed
 
-Header markup и burger — SSOT в `design-system/js/header.js`. Consumer рендерит library `<AppHeader config={headerConfig} />` (не JSX duplicate):
+Header markup and burger stay SSOT in `design-system/js/header.js`. Consumer renders library `<AppHeader />` (not a JSX duplicate):
 
-- `frontend-react/src/lib/headerConfig.ts` — config (раньше inline в `index.html`)
-- `App.tsx` — `<AppHeader />` над `<Routes>`
-- `index.html` — только `#root`; script inject делает `AppHeader`
+- `src/lib/headerConfig.ts` — brand **Multistack**, nav hrefs via `appPath()` for `/stack/{backend}/{frontend}/`
+- `App.tsx` — `<AppHeader config={headerConfig} scriptSrc={appPath('/js/header.js')} />` above routes
+- `index.html` — `#root` + mount boot; no inline header markup
 
-Demo pilot (`packages/react-ui/demo/multistack/`) — тот же embed, не локальный JSX header.
+Library playground (wrappers only, not the SPA): `projects/design-system-home/react-ui/demo/`.
 
-## SPA fallback
+## SPA vs API
 
-Client-side routing (react-router). Spring форвардит клиентские маршруты на bundled `index.html`:
-
-```java
-@GetMapping({"/login", "/register"})
-public String spa() { return "forward:/index.html"; }
-```
-
-`SecurityConfig` permit-all статику и SPA-маршруты (`/`, `/index.html`, `/login`, `/register`, `/assets/**`, `/icons/**`, `/manifest.webmanifest`, `/sw.js`). REST-аутентификация — на `/api/auth/*` (login/register/logout permit, `/api/auth/me` authenticated).
+Client-side routing (react-router) lives in the **frontend** container. Backend `SecurityConfig` permits REST only (`GET /api/health|/api/items`, `POST /api/auth/*`). It does **not** `forward:/index.html` for `/login` / `/register`.
 
 ## PWA baseline
 
-`vite-plugin-pwa` (`registerType: autoUpdate`, `injectRegister: null` — регистрация в `src/pwa/registerServiceWorker.ts`):
+**SSOT primitive:** [`pwa-baseline`](pwa-baseline.md) — `design-system/js/pwa-register.js`. Heirs generate `sw.js`; register through the primitive.
 
-- `manifest.webmanifest` — standalone, icons 192/512 + maskable 512 (`icons/`).
-- `sw.js` (Workbox) precache **только** app shell: `index.html`, `assets/index.{js,css}`, `manifest.webmanifest`, оба icon.
-- `navigateFallback: index.html`; `navigateFallbackDenylist: [/^\/api\//]` — `/api/*` всегда online, без offline-кэша API/JWT.
-- `devOptions.enabled: false` — SW не мешает dev.
+Vite heir (`registerType: autoUpdate`, `injectRegister: null`):
 
-Baseline = installable + offline app shell. **Не** входит: push, background sync, offline API.
+- Manifest / icons — `icons/pwa-{192,512,maskable-512}.png`; `name` / `short_name` **Multistack**.
+- Workbox precache: `index.html`, `assets/index.js`, `assets/index.css`, `manifest.webmanifest`, icons.
+- `navigateFallback: index.html`; denylist `/api/` **and** static extensions (nested-route MIME).
+- `devOptions.enabled: false`.
 
-## Build → backend static
-
-`scripts/sync-app-static.sh` (запускается в CI/deploy):
-
-1. `wire-ui.sh` + rsync design-system `css/js/templates` → static (если monorepo root найден; standalone CI использует committed embed).
-2. rsync `app-static/` → static.
-3. `cd frontend-react && npm ci && npm run build` → `index.html` + `assets/` + PWA в static.
-
-React-билд последний: materialized CSS доступен Vite-сборке.
+Baseline = installable + offline app shell. **Not** in: push, background sync, offline API.
 
 ## Tests
 
 | Слой | Где |
 |------|-----|
-| React unit/component (Vitest + React Testing Library) | `frontend-react/src/**/*.test.{ts,tsx}` — pages (Home/Login/Register), auth, api, SW register, header nav |
-| Java pyramid | `tests/` — unit → api → integration → e2e → component |
-| Visual | Selenide screenshot baselines — `tests/src/test/resources/screenshots/` (login, home-layout, welcome-panel, …), Gradle `testVisual` |
+| React unit/component (Vitest + RTL) | `frontend/typescript/frontend-typescript-react/src/test/**` |
+| Java pyramid | `tests/java/tests-java-gradle-junit5-allure3-selenide/` |
+| Visual | Selenide baselines under that tests module `src/test/resources/screenshots/{e2e,mock}/` — Gradle `testVisual`. Not Playwright in the SPA. |
 
-Java-пирамида зелёная включая visual. React component tests — отдельная ось React Testing Library (см. `react-component-layer.md`), не заменяет Java `@Layer("component")` на `/components.html`.
+## Form controls (id / name)
 
-## login.html removed
+Chrome Issues: *A form field element should have an id or name attribute*.
 
-Server-rendered `login.html` / `register.html` удалены — теперь SPA-маршруты `/login`, `/register` (React Router + Spring forward). `SecurityConfig` сохраняет legacy `*.html` permit-all для обратной совместимости старых ссылок.
+| Control | `id` | `name` | `autocomplete` |
+|---------|------|--------|----------------|
+| Login | `login-input` | `username` | `username` |
+| Password | `password-input` | `password` | `current-password` / `new-password` |
+| Confirm | `confirm-password-input` | `confirm-password` | `new-password` |
+
+SSOT: [`projects/autotests-ai-multistack-home/autotests-ai-multistack-app/_contract/flows/login.md`](../../../projects/autotests-ai-multistack-home/autotests-ai-multistack-app/_contract/flows/login.md) `formControls` · library `PlaqueField` defaults `name` from `paramId` / `id` when omitted · DS `templates/plaque-field.html` examples include both.
 
 ## Do
 
-- Vite build только через `sync-app-static.sh` (materialize CSS первым).
-- `emptyOutDir: false` — не стирать общий static dir.
-- Alias на library src, primitive CSS как embed — не дублировать классы.
+- Edit the default cell in `autotests-ai-multistack-app`, then `python scripts/deploy-ethalon-modules.py --sync-from-default --dry-run` for Flyway siblings (skill `deploy-ethalon-modules`; not concat onto `schema.sql`).
+- Keep Vite `base: './'` + pin-mount boot for nested `/stack/` URLs.
+- Alias this module's `vendor/react-ui`; `dedupe` React. Keep `frontend/_shared` as the sync hub only.
+- Auth `PlaqueField`: always `id` + `name` (canon table above).
 
 ## Don't
 
-- Не менять backend-роль (SPA-only forward + REST).
-- Не кэшировать `/api/*` в SW.
-- Не хешировать имена ассетов (committed static diff).
-- Не переписывать design-system CSS в React.
+- Do not revive `frontend-react/` or Vite `outDir` into Spring `static/`.
+- Do not treat the backend as the SPA host (no Spring `forward:/index.html` on the teaching pair).
+- Do not cache `/api/*` in the service worker.
+- Do not hash asset file names (stable `assets/[name].js`).
+- Do not rewrite design-system CSS in React.
+- Do not leave `input`/`select` without both `id` and `name`.

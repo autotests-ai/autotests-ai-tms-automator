@@ -50,9 +50,11 @@
 {"id": "script-sonar-gate-wait", "path": "docs/rag/config/script-sonar-gate-wait.md", "domain": "config", "phase": "9.platform", "tags": ["script", "sonar", "quality-gate"]}
 {"id": "script-crystallize-report", "path": "docs/rag/config/script-crystallize-report.md", "domain": "config", "phase": "9.platform", "tags": ["script", "crystallize", "telemetry"]}
 {"id": "script-configurator-boolean-audit", "path": "docs/rag/config/script-configurator-boolean-audit.md", "domain": "config", "phase": "9.platform", "tags": ["script", "configurator-boolean", "design-system"]}
-{"id": "react-toolchain", "path": "docs/rag/config/react-toolchain.md", "domain": "config", "phase": "9.react-pilot", "tags": ["react", "typescript", "vite", "vitest", "toolchain"]}
+{"id": "react-toolchain", "path": "docs/rag/config/react-toolchain.md", "domain": "config", "phase": "9.react-pilot", "tags": ["react", "typescript", "vite", "vitest", "pnpm", "toolchain", "angular", "vue"]}
 {"id": "react-component-layer", "path": "docs/rag/testing/react-component-layer.md", "domain": "testing", "phase": "9.react-pilot", "tags": ["react", "react-testing-library", "vitest", "allure-vitest", "component", "pyramid", "allure"]}
-{"id": "frontend-artifacts", "path": "docs/rag/config/frontend-artifacts.md", "domain": "config", "phase": "9.react-pilot", "tags": ["react", "node", "artifacts", "gitignore"]}
-{"id": "react-app-multistack", "path": "docs/rag/config/react-app-multistack.md", "domain": "config", "phase": "9.react-pilot", "tags": ["react", "spa", "vite", "spring", "pwa", "autotests-ai-multistack-app", "consumer"]}
+{"id": "react-rtl-allure", "path": "docs/rag/testing/react-rtl-allure.md", "domain": "testing", "phase": "9.react-pilot", "tags": ["react", "allure", "vitest", "labels"]}
+{"id": "react-component-coexist", "path": "docs/rag/testing/react-component-coexist.md", "domain": "testing", "phase": "9.react-pilot", "tags": ["react", "java", "scope", "ci"]}
+{"id": "frontend-artifacts", "path": "docs/rag/config/frontend-artifacts.md", "domain": "config", "phase": "9.react-pilot", "tags": ["react", "node", "artifacts", "gitignore", "cache", "ci"]}
+{"id": "react-app-multistack", "path": "docs/rag/config/react-app-multistack.md", "domain": "config", "phase": "9.react-pilot", "tags": ["react", "spa", "vite", "spring", "pwa", "multistack", "consumer"]}
 {"id": "docker-canon", "path": "docs/rag/config/docker-canon.md", "domain": "config", "phase": "4a", "tags": ["config", "docker", "compose", "dockerfile", "dev", "prod"]}
 

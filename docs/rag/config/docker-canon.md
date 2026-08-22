@@ -17,11 +17,10 @@ SSOT: `docs/docker/DOCKER-CANON.md` · prod reboot: `docs/docker/prod-reboot.md`
 |------|------|
 | `docs/docker/DOCKER-CANON.md` | Hub — версии, блоки, команды |
 | `docs/docker/prod-reboot.md` | Prod VM reboot policy |
-| `projects/autotests-ai-multistack-home/ethalon/docker-compose.yml` | Default-cell compose |
-| `projects/autotests-ai-multistack-home/ethalon/docker-compose.prod.yml` | Prod override (`restart: unless-stopped`) |
-| `projects/autotests-ai-multistack-home/ethalon/backend/java/backend-java-spring/Dockerfile` | Multi-stage temurin 21 |
-| `projects/autotests-ai-multistack-home/ethalon/backend/java/backend-java-spring/.dockerignore` | Lean build context |
-| `projects/reference-home/dev/docker-compose.yml` | Dev nginx proxy |
+| `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/docker-compose.yml` | Default-cell compose (postgres + java-spring + ts-react) |
+| `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/docker-compose.prod.yml` | Prod override (`restart: unless-stopped`) |
+| `projects/autotests-ai-multistack-home/autotests-ai-multistack-app/backend/java/backend-java-spring/Dockerfile` | Multi-stage temurin 21 |
+| `projects/autotests-ai-multistack-home/dev/docker-compose.yml` | Dev nginx proxy |
 | `projects/selenoid-home/dev/` | Selenoid hub (native binary, не compose) |
 
 ## Входы / Assert
