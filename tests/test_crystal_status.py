@@ -30,6 +30,9 @@ class CrystalStatusTest(unittest.TestCase):
             {"id": 21, "name": "pending_review"},
             {"id": 22, "name": "live"},
         ]
+        client.get_test_case_custom_fields.return_value = [
+            {"id": 1, "name": "cm", "customField": {"id": 4, "name": "Component"}},
+        ]
 
         report = patch_crystal_status(client, 11, "pending_review", dry_run=False)
 
@@ -37,10 +40,10 @@ class CrystalStatusTest(unittest.TestCase):
         self.assertFalse(report.from_test_result)
         self.assertTrue(report.patched)
         body = client.patch_test_case.call_args[0][1]
-        names = [item["customField"]["name"] for item in body["customFields"]]
-        self.assertIn("Component", names)
-        self.assertIn(FIELD_NAME, names)
+        ids = [item["id"] for item in body["customFields"]]
+        self.assertEqual(ids, [1, 21])
         self.assertNotIn("from_test_result", str(body))
+        self.assertNotIn(FIELD_NAME, str(body["customFields"]))
 
     def test_refuses_cfschema_mapping(self) -> None:
         client = MagicMock()
@@ -85,6 +88,7 @@ class CrystalStatusTest(unittest.TestCase):
         client.list_project_custom_fields.return_value = [{"id": 9, "name": FIELD_NAME}]
         client.list_custom_field_schemas.return_value = []
         client.list_custom_field_values.return_value = [{"id": 22, "name": "live"}]
+        client.get_test_case_custom_fields.return_value = []
 
         report = patch_from_greedy_json(
             client,
@@ -98,6 +102,20 @@ class CrystalStatusTest(unittest.TestCase):
         )
         self.assertTrue(report.ok())
         self.assertEqual(report.test_case_id, 99)
+
+    def test_resolves_global_field_when_absent_on_project_list(self) -> None:
+        client = MagicMock()
+        client.get_test_case.return_value = {"id": 11, "projectId": 7, "testLayer": {"name": "E2E Tests"}}
+        client.list_project_custom_fields.return_value = [{"id": -4, "name": "Component"}]
+        client.list_global_custom_fields.return_value = [{"id": 6, "name": FIELD_NAME}]
+        client.list_custom_field_schemas.return_value = []
+        client.list_custom_field_values.return_value = [{"id": 22, "name": "live"}]
+        client.get_test_case_custom_fields.return_value = []
+
+        report = patch_crystal_status(client, 11, "live", dry_run=False)
+        self.assertTrue(report.ok(), report.errors)
+        body = client.patch_test_case.call_args[0][1]
+        self.assertEqual(body, {"customFields": [{"id": 22}]})
 
     def test_rejects_from_test_result_payload(self) -> None:
         report = patch_from_greedy_json(MagicMock(), {"from_test_result": True, "crystal_status": "live"})

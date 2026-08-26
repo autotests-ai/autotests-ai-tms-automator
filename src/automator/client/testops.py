@@ -592,6 +592,18 @@ class AllureTestOpsClient:
             return payload
         return list(payload.get("content", []))
 
+    def list_global_custom_fields(self) -> list[dict[str, Any]]:
+        payload = self._get("/cf")
+        if isinstance(payload, list):
+            return payload
+        return list(payload.get("content", []))
+
+    def get_test_case_custom_fields(self, test_case_id: int) -> list[dict[str, Any]]:
+        payload = self._get(f"/testcase/{test_case_id}/cfv")
+        if isinstance(payload, list):
+            return payload
+        return list(payload.get("content", []))
+
     def list_custom_field_schemas(self, project_id: int, *, size: int = 100) -> list[dict[str, Any]]:
         payload = self._get("/cfschema", projectId=project_id, size=size)
         return list(payload.get("content", []))

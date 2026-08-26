@@ -59,6 +59,20 @@ def _refuse_manual_layer(test_case: dict[str, Any]) -> str | None:
     return None
 
 
+def _resolve_field(client: AllureTestOpsClient, project_id: int | None) -> int | None:
+    if project_id:
+        try:
+            field_id = _field_id(client.list_project_custom_fields(project_id))
+            if field_id is not None:
+                return field_id
+        except Exception:
+            pass
+    try:
+        return _field_id(client.list_global_custom_fields())
+    except Exception:
+        return None
+
+
 def ensure_crystal_status_values(
     client: AllureTestOpsClient,
     project_id: int,
@@ -67,11 +81,10 @@ def ensure_crystal_status_values(
 ) -> CrystalStatusReport:
     report = CrystalStatusReport(project_id=project_id, dry_run=dry_run)
     try:
-        fields = client.list_project_custom_fields(project_id)
+        field_id = _resolve_field(client, project_id)
     except Exception as exc:  # noqa: BLE001
-        report.errors.append(f"list_project_custom_fields: {exc}")
+        report.errors.append(f"list custom fields: {exc}")
         return report
-    field_id = _field_id(fields)
     if field_id is None:
         report.errors.append(f'Custom field "{FIELD_NAME}" not found — add it in TestOps (not from_test_result)')
         return report
@@ -126,11 +139,10 @@ def patch_crystal_status(
     project_id = int(test_case.get("projectId") or 0)
     report.project_id = project_id
     try:
-        fields = client.list_project_custom_fields(project_id)
+        field_id = _resolve_field(client, project_id)
     except Exception as exc:  # noqa: BLE001
-        report.errors.append(f"list_project_custom_fields: {exc}")
+        report.errors.append(f"list custom fields: {exc}")
         return report
-    field_id = _field_id(fields)
     if field_id is None:
         report.errors.append(f'Custom field "{FIELD_NAME}" not found')
         return report
@@ -153,23 +165,22 @@ def patch_crystal_status(
         report.errors.append(f"value {crystal_status!r} missing — run --ensure-values")
         return report
     report.value_id = value_id or None
-    merged: list[dict[str, Any]] = []
-    for item in test_case.get("customFields") or []:
-        if not isinstance(item, dict):
+    existing_cfv: list[dict[str, Any]] = []
+    try:
+        existing_cfv = client.get_test_case_custom_fields(test_case_id)
+    except Exception:
+        existing_cfv = list(test_case.get("customFields") or [])
+    ids: list[int] = []
+    for item in existing_cfv:
+        if not isinstance(item, dict) or item.get("id") is None:
             continue
         cf = item.get("customField") or {}
         if str(cf.get("name")) == FIELD_NAME or int(cf.get("id") or 0) == field_id:
             continue
-        merged.append(item)
+        ids.append(int(item["id"]))
     if crystal_status != "none" and value_id:
-        merged.append(
-            {
-                "id": value_id,
-                "name": crystal_status,
-                "customField": {"id": field_id, "name": FIELD_NAME},
-            }
-        )
-    body = {"customFields": merged}
+        ids.append(value_id)
+    body = {"customFields": [{"id": i} for i in ids]}
     if FORBIDDEN_POLICY in str(body):
         report.errors.append(f"{FORBIDDEN_POLICY} forbidden on crystal_status PATCH")
         return report
