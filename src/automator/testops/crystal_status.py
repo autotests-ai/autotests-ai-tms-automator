@@ -12,6 +12,9 @@ VALUES = ("none", "pending_review", "live")
 ELIGIBILITY_TAG = "crystal"
 FORBIDDEN_POLICY = "from_test_result"
 FORBIDDEN_LAYER = "manual"
+WORKFLOW_NAME = "greedy.guru crystals"
+STATUS_ACTIVE_ID = -3
+STATUS_OUTDATED_ID = -4
 
 
 @dataclass
@@ -27,6 +30,10 @@ class CrystalStatusReport:
     created_values: list[str] = field(default_factory=list)
     skipped_values: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    workflow_id: int | None = None
+    workflow_name: str = WORKFLOW_NAME
+    created_workflow: bool = False
+    workflow_assigned: bool = False
 
     def ok(self) -> bool:
         return not self.errors
@@ -217,3 +224,71 @@ def patch_from_greedy_json(
     if test_case_id <= 0:
         return CrystalStatusReport(errors=["testcase id required"])
     return patch_crystal_status(client, test_case_id, crystal_status, dry_run=dry_run)
+
+
+def ensure_crystal_workflow(
+    client: AllureTestOpsClient,
+    *,
+    dry_run: bool = False,
+) -> CrystalStatusReport:
+    """Find or create workflow with only Active + Outdated. Not the AI automator workflow."""
+    report = CrystalStatusReport(dry_run=dry_run, workflow_name=WORKFLOW_NAME)
+    try:
+        workflows = client.list_workflows()
+    except Exception as exc:  # noqa: BLE001
+        report.errors.append(f"list_workflows: {exc}")
+        return report
+    for item in workflows:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("name")) == WORKFLOW_NAME:
+            report.workflow_id = int(item["id"])
+            return report
+    if dry_run:
+        report.created_workflow = True
+        report.workflow_id = 0
+        return report
+    try:
+        created = client.create_workflow(WORKFLOW_NAME, [STATUS_ACTIVE_ID, STATUS_OUTDATED_ID])
+    except Exception as exc:  # noqa: BLE001
+        report.errors.append(f"create_workflow: {exc}")
+        return report
+    report.workflow_id = int(created.get("id") or 0) or None
+    report.created_workflow = True
+    if report.workflow_id is None:
+        report.errors.append("create_workflow returned no id")
+    return report
+
+
+def assign_crystal_workflow(
+    client: AllureTestOpsClient,
+    test_case_id: int,
+    *,
+    dry_run: bool = False,
+) -> CrystalStatusReport:
+    """Move the case onto greedy.guru crystals. Does not change crystal_status."""
+    report = ensure_crystal_workflow(client, dry_run=dry_run)
+    report.test_case_id = test_case_id
+    if not report.ok() or report.workflow_id is None:
+        return report
+    try:
+        test_case = client.get_test_case(test_case_id)
+    except Exception as exc:  # noqa: BLE001
+        report.errors.append(f"get_test_case: {exc}")
+        return report
+    manual = _refuse_manual_layer(test_case)
+    if manual:
+        report.errors.append(manual)
+        return report
+    report.project_id = int(test_case.get("projectId") or 0) or None
+    body = {"workflowId": report.workflow_id, "statusId": STATUS_ACTIVE_ID}
+    if dry_run:
+        report.workflow_assigned = True
+        return report
+    try:
+        client.patch_test_case(test_case_id, body)
+    except Exception as exc:  # noqa: BLE001
+        report.errors.append(f"PATCH workflow: {exc}")
+        return report
+    report.workflow_assigned = True
+    return report

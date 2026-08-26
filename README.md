@@ -26,6 +26,14 @@ Workflow **6** — «Ручные тесты» (`allure.qa.guru`).
 
 **После успешного CI:** automator закрывает launch; TestOps ставит `automated=true`, затем automator переводит кейс в workflow **5** / статус **13**.
 
+## greedy.guru crystals
+
+Отдельный workflow **«greedy.guru crystals»** (Active / Outdated). Не workflow **5** «Автоматизированные тесты». Аппрув кристалла — поле `crystal_status` + JSON в git, не статус «На ревью».
+
+```bash
+PYTHONPATH=src python scripts/patch_crystal_status.py --ensure-workflow --testcase 50707
+```
+
 ## Что делает automator
 
 1. Логирует ручной кейс в комментарий TestOps

@@ -63,6 +63,19 @@ class AllureTestOpsClient:
     def get_workflow(self, workflow_id: int) -> dict[str, Any]:
         return self._get(f"/workflow/{workflow_id}")
 
+    def list_workflows(self, *, page: int = 0, size: int = 100) -> list[dict[str, Any]]:
+        payload = self._get("/workflow", page=page, size=size)
+        if isinstance(payload, list):
+            return payload
+        return list(payload.get("content", []))
+
+    def create_workflow(self, name: str, status_ids: list[int]) -> dict[str, Any]:
+        body = {"name": name, "statuses": [{"id": i} for i in status_ids]}
+        if self._settings.dry_run:
+            logger.info("DRY RUN: would create workflow %r statuses=%s", name, status_ids)
+            return {**body, "id": 0, "dry_run": True}
+        return self._post("/workflow", body)
+
     def list_projects(self, page: int = 0, size: int = 100) -> dict[str, Any]:
         return self._get("/project", page=page, size=size)
 

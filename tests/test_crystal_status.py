@@ -7,7 +7,10 @@ from unittest.mock import MagicMock
 
 from automator.testops.crystal_status import (
     FIELD_NAME,
+    WORKFLOW_NAME,
+    assign_crystal_workflow,
     ensure_crystal_status_values,
+    ensure_crystal_workflow,
     patch_crystal_status,
     patch_from_greedy_json,
 )
@@ -120,6 +123,47 @@ class CrystalStatusTest(unittest.TestCase):
     def test_rejects_from_test_result_payload(self) -> None:
         report = patch_from_greedy_json(MagicMock(), {"from_test_result": True, "crystal_status": "live"})
         self.assertFalse(report.ok())
+
+    def test_ensure_workflow_reuses_existing(self) -> None:
+        client = MagicMock()
+        client.list_workflows.return_value = [
+            {"id": 5, "name": "Автоматизированные тесты"},
+            {"id": 7, "name": WORKFLOW_NAME},
+        ]
+        report = ensure_crystal_workflow(client, dry_run=False)
+        self.assertTrue(report.ok())
+        self.assertEqual(report.workflow_id, 7)
+        client.create_workflow.assert_not_called()
+
+    def test_ensure_workflow_creates_active_outdated_only(self) -> None:
+        client = MagicMock()
+        client.list_workflows.return_value = [{"id": 5, "name": "Автоматизированные тесты"}]
+        client.create_workflow.return_value = {"id": 7, "name": WORKFLOW_NAME}
+        report = ensure_crystal_workflow(client, dry_run=False)
+        self.assertTrue(report.ok())
+        self.assertTrue(report.created_workflow)
+        self.assertEqual(report.workflow_id, 7)
+        ids = client.create_workflow.call_args[0][1]
+        self.assertEqual(ids, [-3, -4])
+
+    def test_assign_workflow_refuses_manual_layer(self) -> None:
+        client = MagicMock()
+        client.list_workflows.return_value = [{"id": 7, "name": WORKFLOW_NAME}]
+        client.get_test_case.return_value = {"id": 11, "projectId": 7, "testLayer": {"name": "Manual Tests"}}
+        report = assign_crystal_workflow(client, 11)
+        self.assertFalse(report.ok())
+        client.patch_test_case.assert_not_called()
+
+    def test_assign_workflow_patches_ids_only(self) -> None:
+        client = MagicMock()
+        client.list_workflows.return_value = [{"id": 7, "name": WORKFLOW_NAME}]
+        client.get_test_case.return_value = {"id": 11, "projectId": 5366, "testLayer": {"name": "E2E Tests"}}
+        report = assign_crystal_workflow(client, 11, dry_run=False)
+        self.assertTrue(report.ok(), report.errors)
+        self.assertTrue(report.workflow_assigned)
+        body = client.patch_test_case.call_args[0][1]
+        self.assertEqual(body, {"workflowId": 7, "statusId": -3})
+        self.assertNotIn("from_test_result", str(body))
 
 
 if __name__ == "__main__":
