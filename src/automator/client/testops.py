@@ -650,3 +650,9 @@ class AllureTestOpsClient:
             "/cfv",
             {"name": name, "customField": {"id": custom_field_id}},
         )
+
+    def patch_test_case(self, test_case_id: int, body: dict[str, Any]) -> Any:
+        if self._settings.dry_run:
+            logger.info("DRY RUN: would PATCH test case %s %s", test_case_id, body)
+            return {"id": test_case_id, "dry_run": True, **body}
+        return self._patch(f"/testcase/{test_case_id}", body)

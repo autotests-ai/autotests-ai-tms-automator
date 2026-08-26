@@ -78,6 +78,18 @@ python scripts/sync_rag_from_template_project.py          # обновить к�
 python scripts/sync_rag_from_template_project.py --check  # проверить sync
 python scripts/sync_testops_layer_mappings.py --project-id 5271,5267,5263  # Key→Test Layer в TestOps
 python scripts/sync_testops_layer_mappings.py --list-mapping
+python scripts/patch_crystal_status.py --dry-run --from-json greedy-observe.json
+```
+
+## greedy.guru `crystal_status` (тонкий PATCH)
+
+Поле TestOps `crystal_status` **не** `from_test_result` (нет cfschema/label mapping). 3 зелёных Playwright → `pending_review`; Approve — `greedy approve` (diff IR + файл JSON) и этот скрипт PATCH. Allowlist auto-Live только `login`. Не `@Layer("manual")`. Не bootstrap GitHub/Java.
+
+```bash
+python scripts/patch_crystal_status.py --ensure-values --project-id 5274 --dry-run
+python scripts/patch_crystal_status.py --testcase 12345 --status pending_review --dry-run
+go run ./cmd/greedy observe --id login-user1 --eligible --pw-green 3 | \
+  python scripts/patch_crystal_status.py --from-json - --dry-run
 ```
 
 ## Запуск automator
