@@ -32,6 +32,7 @@ Workflow **6** — «Ручные тесты» (`allure.qa.guru`).
 
 ```bash
 PYTHONPATH=src python scripts/patch_crystal_status.py --ensure-workflow --testcase 50707
+# mill ids → testdata/testops-cases.json in greedy-guru (project 5366)
 ```
 
 ## Что делает automator
