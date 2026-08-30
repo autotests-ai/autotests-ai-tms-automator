@@ -85,7 +85,7 @@ Maintainer: `zero-design-system/docs/rag/`. Runtime: `docs/rag/`. Skill: `sync-r
 ```bash
 python scripts/sync_rag_from_template_project.py          # обновить копию
 python scripts/sync_rag_from_template_project.py --check  # проверить sync
-python scripts/sync_testops_layer_mappings.py --project-id 5271,5267,5263  # Key→Test Layer в TestOps
+python scripts/sync_testops_layer_mappings.py --project-id 5311,5271,5267,5263  # Key→Test Layer в TestOps (5311 = Multistack etalon)
 python scripts/sync_testops_layer_mappings.py --list-mapping
 python scripts/patch_crystal_status.py --dry-run --from-json greedy-observe.json
 ```

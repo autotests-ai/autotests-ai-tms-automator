@@ -14,7 +14,7 @@ related: [005-pyramid-gradle-tasks]
 
 ## `@Layer` (ярусы)
 
-Шесть ключей `@Layer` — см. чанк **`test-layers`**. **Visual не входит:** классы `*BaselineTests` остаются `@Layer("e2e")`.
+Семь ключей `@Layer` — см. чанк **`test-layers`** (ADR 016: `ui` + `e2e`). **Visual не входит:** классы `*BaselineTests` / `*ScreenshotTests` остаются на ярусе сценария.
 
 | `@Layer` | Путь / классы | Target |
 |----------|---------------|--------|
@@ -64,7 +64,7 @@ Visual = `@Layer("e2e")` + `@Tag("visual")` + `local_visual` / `testVisual` — 
 ./gradlew testE2e -Denv=one-page-form_prod   # → one-page-form_prod_e2e.properties
 ```
 
-TestOps mapping (`e2e` → E2E Tests, не UI Tests) — чанк **`test-layers`**. Visual в TestOps остаётся **E2E Tests** (`@Layer("e2e")` на классе).
+TestOps mapping (`ui` → UI Tests, `e2e` → E2E Tests) — чанк **`test-layers`**. Screenshot в TestOps остаётся на ярусе сценария.
 
 ## Do
 

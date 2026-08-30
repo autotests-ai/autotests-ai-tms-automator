@@ -42,6 +42,7 @@ class LayerSyncTest(unittest.TestCase):
             {"id": 4, "name": "Integration Tests"},
             {"id": -3, "name": "API Tests"},
             {"id": 5, "name": "Manual Tests"},
+            {"id": -2, "name": "UI Tests"},
         ]
         client.list_layer_schemas.return_value = [
             {
@@ -57,6 +58,10 @@ class LayerSyncTest(unittest.TestCase):
 
         self.assertIn("e2e → E2E Tests", report.skipped_mappings)
         self.assertTrue(report.upload_policy_skipped)
+
+    def test_ui_maps_to_ui_tests(self) -> None:
+        self.assertEqual(PYRAMID_LAYER_MAPPINGS["ui"], "UI Tests")
+        self.assertIn("ui", PYRAMID_LAYER_MAPPINGS)
 
 
 if __name__ == "__main__":

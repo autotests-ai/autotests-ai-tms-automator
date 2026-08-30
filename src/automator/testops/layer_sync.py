@@ -8,21 +8,19 @@ from typing import Any
 from automator.client.testops import AllureTestOpsClient
 
 # @Layer value in Java → TestOps Test Layer display name (admin /admin/testlayer).
+# ADR 016: browser-on-stub is `ui` / UI Tests; live-backend journeys stay `e2e`.
 PYRAMID_LAYER_MAPPINGS: dict[str, str] = {
     "unit": "Unit Tests",
     "component": "Component Tests",
     "integration": "Integration Tests",
     "api": "API Tests",
+    "ui": "UI Tests",
     "e2e": "E2E Tests",
     "manual": "Manual Tests",
 }
 
 # Default Test Layer for manual workflow cases (give-manual-testcase, create_manual_testcase.py).
 MANUAL_CASE_DEFAULT_LAYER_KEY = "manual"
-
-# Allure default layer — do not assign to qa-guru cases; migrate to E2E Tests if found.
-DEPRECATED_TESTOPS_LAYER = "UI Tests"
-MIGRATE_UI_TO_LAYER = "E2E Tests"
 
 
 def resolve_layer_id(
@@ -74,7 +72,7 @@ def sync_project_layer_mappings(
     project_id: int,
     *,
     dry_run: bool = False,
-    migrate_ui_tests: bool = True,
+    migrate_ui_tests: bool = False,
 ) -> LayerSyncReport:
     report = LayerSyncReport(project_id=project_id)
 
@@ -147,19 +145,9 @@ def sync_project_layer_mappings(
     except Exception as exc:  # noqa: BLE001
         report.errors.append(f"upload_policy: {exc}")
 
-    if migrate_ui_tests and DEPRECATED_TESTOPS_LAYER in layer_ids and MIGRATE_UI_TO_LAYER in layer_ids:
-        search = f'layer = "{DEPRECATED_TESTOPS_LAYER}"'
-        try:
-            ui_cases = client.search_test_cases(project_id, search, size=1)
-            total = int(ui_cases.get("totalElements", 0))
-            if total > 0 and not dry_run:
-                client.bulk_set_test_layer(
-                    project_id,
-                    layer_ids[MIGRATE_UI_TO_LAYER],
-                    search=search,
-                )
-            report.migrated_ui_cases = total
-        except Exception as exc:  # noqa: BLE001
-            report.errors.append(f"migrate_ui_tests: {exc}")
+    if migrate_ui_tests:
+        report.skipped_mappings.append(
+            "migrate_ui_tests ignored (ADR 016: UI Tests is @Layer(ui), not a leftover)"
+        )
 
     return report

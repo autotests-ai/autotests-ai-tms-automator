@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url";
 
 const UNCATEGORIZED_FAILURE = "Прочее";
 const TAXONOMY_COLORS = ["#dc2626", "#d97706", "#7c3aed", "#0891b2", "#64748b"];
-const PYRAMID_LAYERS = ["unit", "component", "integration", "api", "e2e", "manual"];
+const PYRAMID_LAYERS = ["unit", "component", "integration", "api", "ui", "e2e", "manual"];
 
 function parseArgs(argv) {
   const options = {

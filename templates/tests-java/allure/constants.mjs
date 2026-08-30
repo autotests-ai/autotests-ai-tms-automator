@@ -6,6 +6,7 @@ export const PYRAMID_LAYERS = [
   "component",
   "integration",
   "api",
+  "ui",
   "e2e",
   "manual",
 ];

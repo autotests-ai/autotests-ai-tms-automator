@@ -48,7 +48,12 @@ def main() -> int:
     parser.add_argument(
         "--no-migrate-ui",
         action="store_true",
-        help="Do not bulk-migrate cases from UI Tests to E2E Tests",
+        help="No-op (ADR 016). Kept so old CI flags still parse.",
+    )
+    parser.add_argument(
+        "--migrate-ui",
+        action="store_true",
+        help="No-op (ADR 016). UI Tests is the official display name for @Layer(ui).",
     )
     parser.add_argument("--list-mapping", action="store_true", help="Print canonical key → layer table and exit")
     args = parser.parse_args()
@@ -56,7 +61,6 @@ def main() -> int:
     if args.list_mapping:
         for key, layer_name in PYRAMID_LAYER_MAPPINGS.items():
             print(f"{key:12} → {layer_name}")
-        print(f"{'(deprecated)':12}   UI Tests — do not assign")
         return 0
 
     settings = Settings()
@@ -76,7 +80,7 @@ def main() -> int:
                 client,
                 project_id,
                 dry_run=args.dry_run,
-                migrate_ui_tests=not args.no_migrate_ui,
+                migrate_ui_tests=False,
             )
             _print_report(report)
             if not report.ok():
