@@ -35,7 +35,7 @@ Header-специфика (селекторы, viewports preview) — чанк `
 
 ## Assert
 
-pixel diff ratio ≤ `visualDiffThreshold` (default `0.015`); размер PNG не меняется. CI: compare-only — без baseline PNG тест **FAIL** (не auto-record). **CI SSOT:** baselines сняты на Linux headless Chrome 148 (clone `ci.yml` jobs `ui-mock-tests` / `ui-ci-tests` / `e2e-tests-stage` / `e2e-tests`). `ui-ci-tests` пишет в `screenshots/prod/` с `-Denv=ci` (local compose, не live prod).
+pixel diff ratio ≤ `visualDiffThreshold` (default `0.015`); размер PNG не меняется. CI: compare-only — без baseline PNG тест **FAIL** (не auto-record). **CI SSOT:** baselines сняты на Linux headless Chrome 148 (clone `ci.yml` jobs `ui-tests` / `ui-ci-tests` / `e2e-tests-stage` / `e2e-tests`). `ui-ci-tests` пишет в `screenshots/prod/` с `-Denv=ci` (local compose, не live prod).
 
 ## Allure attachments (`{area}-{viewport}`)
 
