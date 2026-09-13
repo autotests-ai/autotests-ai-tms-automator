@@ -88,7 +88,7 @@ gh variable set ALLURE_ENDPOINT --body https://allure.qa.guru -R autotests-cloud
 gh secret set ALLURE_TOKEN -R autotests-cloud/qa_guru_automator_ethalon-5267
 ```
 
-GitHub bootstrap: `GitHubClient.create_repo_from_template()` → `gh repo create --template $GITHUB_TEMPLATE` (по умолчанию `autotests-ai/java-junit5-rest_assured-selenide`), wait contents, clone, overlay `selenoid-qa-guru_github.yml` если нет. Не `prepare_bootstrap_workdir()` и не force-push.
+GitHub bootstrap: `GitHubClient.create_repo_from_template()` → `gh repo create --template $GITHUB_TEMPLATE` (по умолчанию `autotests-ai/java-junit5-rest_assured-selenide`), wait contents, clone, overlay `selenoid-qa-guru_github.yml` если нет. Не trim `templates/tests-java` и не force-push.
 
 ### RAG (vendored)
 
