@@ -10,7 +10,7 @@ Each Allure TestOps project gets its own GitHub repo:
 `https://github.com/autotests-cloud/{project-name}-{projectId}`
 
 **Эталон (разработка):** `templates/tests-java/` — pyramid, PO, visual, header; RAG `docs/rag/`.  
-**GitHub bootstrap:** trim из `templates/tests-java/` через `prepare_bootstrap_workdir()` — infra без e2e test classes.  
+**GitHub bootstrap:** `gh repo create --template autotests-ai/java-junit5-rest_assured-selenide` (не trim, не force-push).  
 **RAG:** rule `rag-retrieval.mdc` — vendored `docs/rag/`.  
 **Static UI (local):** `templates/vanilla-ui/` + `python -m http.server 3000`.
 

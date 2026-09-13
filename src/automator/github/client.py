@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from automator.errors import AutomationError, RepositoryNotFoundError
-from automator.github.template import prepare_bootstrap_workdir
 from automator.video import VideoCapture, find_selenoid_video_url, scan_tree_for_selenoid_video_url
 
 logger = logging.getLogger(__name__)
@@ -42,10 +41,24 @@ class WorkflowRunInfo:
     report_url: str | None
 
 
+# Curriculum catalog cell (GitHub template). Runtime repos live in autotests-cloud.
+DEFAULT_TEMPLATE_REPO = "autotests-ai/java-junit5-rest_assured-selenide"
+RUNTIME_WORKFLOW_FILE = "selenoid-qa-guru_github.yml"
+
+
 class GitHubClient:
-    def __init__(self, org: str, *, repo_public: bool = True) -> None:
+    def __init__(
+        self,
+        org: str,
+        *,
+        repo_public: bool = True,
+        template_repo: str = DEFAULT_TEMPLATE_REPO,
+        runtime_workflow: Path | None = None,
+    ) -> None:
         self._org = org
         self._repo_public = repo_public
+        self._template_repo = template_repo
+        self._runtime_workflow = runtime_workflow
 
     def _run(
         self,
@@ -177,70 +190,39 @@ class GitHubClient:
             return
         _raise_command_failed(result, f"enable GitHub Pages for {repo_full}")
 
-    def create_repo_from_template(
+    def _wait_for_template_contents(self, repo_name: str, timeout_sec: int = 90) -> None:
+        """GitHub fills template repos asynchronously; clone before contents → empty tree."""
+        repo_full = f"{self._org}/{repo_name}"
+        deadline = time.monotonic() + timeout_sec
+        while time.monotonic() < deadline:
+            result = subprocess.run(
+                ["gh", "api", f"repos/{repo_full}/contents"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0:
+                try:
+                    payload = json.loads(result.stdout or "[]")
+                except json.JSONDecodeError:
+                    payload = []
+                if isinstance(payload, list) and payload:
+                    return
+            time.sleep(2)
+        raise AutomationError(f"Timed out waiting for template contents in {repo_full}")
+
+    @staticmethod
+    def _workdir_bootstrapped(workdir: Path) -> bool:
+        return (workdir / "build.gradle").is_file() or (workdir / "build.gradle.kts").is_file()
+
+    def _configure_allure_ci(
         self,
         repo_name: str,
-        template_dir: Path,
-        workdir: Path,
         allure_project_id: int,
         allure_endpoint: str,
         allure_token: str,
-        description: str,
-        rag_source: Path | None = None,
-    ) -> str:
+    ) -> None:
         repo_full = f"{self._org}/{repo_name}"
-        repo_url = f"https://github.com/{repo_full}"
-
-        if not self.repo_exists(repo_name):
-            create_cmd = [
-                "gh",
-                "repo",
-                "create",
-                repo_full,
-                "--description",
-                description,
-            ]
-            if self._repo_public:
-                create_cmd.append("--public")
-            else:
-                create_cmd.append("--private")
-            result = self._run(create_cmd, check=False, action=f"gh repo create {repo_full}")
-            if result.returncode != 0 and "already exists" not in _command_detail(result).lower():
-                _raise_command_failed(result, f"Failed to create repo {repo_full}")
-            logger.info("Created GitHub repo %s", repo_url)
-
-        workdir.parent.mkdir(parents=True, exist_ok=True)
-        prepare_bootstrap_workdir(template_dir, workdir, rag_source=rag_source)
-
-        self._run(["git", "init"], cwd=workdir, action="git init")
-        self._run(["git", "branch", "-M", "main"], cwd=workdir, action="git branch -M main")
-        self._run(
-            ["git", "remote", "add", "origin", self._git_remote_url(repo_full)],
-            cwd=workdir,
-            action="git remote add origin",
-        )
-        self._run(["git", "add", "-A"], cwd=workdir, action="git add")
-        commit = self._run(
-            ["git", "commit", "-m", "Initial commit: UI test project from automator template"],
-            cwd=workdir,
-            check=False,
-            action="git commit",
-        )
-        if commit.returncode != 0 and "nothing to commit" not in (commit.stdout + commit.stderr):
-            _raise_command_failed(commit, f"Git commit to {repo_full} failed")
-        push = self._run(
-            ["git", "push", "-u", "origin", "main", "--force"],
-            cwd=workdir,
-            check=False,
-            action=f"git push to {repo_full}",
-        )
-        if push.returncode != 0:
-            detail = _command_detail(push)
-            hint = "Check org access (autotests-cloud may block private repos due to trade controls)."
-            raise AutomationError(
-                f"Git push to {repo_full} failed: {detail}. {hint}" if detail else f"Git push to {repo_full} failed. {hint}"
-            )
-
         self._run(
             ["gh", "variable", "set", "ALLURE_PROJECT_ID", "--body", str(allure_project_id), "-R", repo_full],
             action=f"gh variable set ALLURE_PROJECT_ID for {repo_full}",
@@ -253,6 +235,111 @@ class GitHubClient:
             ["gh", "secret", "set", "ALLURE_TOKEN", "--body", allure_token, "-R", repo_full],
             action=f"gh secret set ALLURE_TOKEN for {repo_full}",
         )
+
+    def _runtime_workflow_path(self, workdir: Path) -> Path:
+        return workdir / ".github" / "workflows" / RUNTIME_WORKFLOW_FILE
+
+    def _ensure_runtime_workflow(self, repo_name: str, workdir: Path) -> None:
+        """Catalog cell has composite actions but no dispatch workflow. Overlay without force-push."""
+        dest = self._runtime_workflow_path(workdir)
+        if dest.is_file():
+            return
+        source = self._runtime_workflow
+        if source is None or not Path(source).is_file():
+            raise AutomationError(
+                f"{self._org}/{repo_name} has no {RUNTIME_WORKFLOW_FILE} after template clone. "
+                "Set runtime_workflow to templates/tests-java/.github/workflows/"
+                f"{RUNTIME_WORKFLOW_FILE}."
+            )
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, dest)
+        rel = dest.relative_to(workdir).as_posix()
+        repo_full = f"{self._org}/{repo_name}"
+        self._run(["git", "add", rel], cwd=workdir, action=f"git add {rel}")
+        commit = self._run(
+            [
+                "git",
+                "commit",
+                "-m",
+                f"Add runtime workflow {RUNTIME_WORKFLOW_FILE} from automator\n\n[skip ci]",
+            ],
+            cwd=workdir,
+            check=False,
+            action=f"git commit workflow for {repo_full}",
+        )
+        if commit.returncode != 0 and "nothing to commit" not in (commit.stdout + commit.stderr):
+            _raise_command_failed(commit, f"Git commit workflow to {repo_full} failed")
+        if commit.returncode != 0:
+            return
+        self._run(
+            ["git", "push", "origin", "main"],
+            cwd=workdir,
+            action=f"git push workflow to {repo_full}",
+        )
+
+    def create_repo_from_template(
+        self,
+        repo_name: str,
+        workdir: Path,
+        allure_project_id: int,
+        allure_endpoint: str,
+        allure_token: str,
+        description: str,
+        template_repo: str | None = None,
+    ) -> str:
+        """Create runtime repo via ``gh repo create --template`` (catalog cell).
+
+        Does not trim ``templates/tests-java`` and does not ``git push --force``.
+        """
+        repo_full = f"{self._org}/{repo_name}"
+        repo_url = f"https://github.com/{repo_full}"
+        template = template_repo or self._template_repo
+        created = False
+
+        if not self.repo_exists(repo_name):
+            create_cmd = [
+                "gh",
+                "repo",
+                "create",
+                repo_full,
+                "--template",
+                template,
+                "--description",
+                description,
+            ]
+            if self._repo_public:
+                create_cmd.append("--public")
+            else:
+                create_cmd.append("--private")
+            result = self._run(create_cmd, check=False, action=f"gh repo create {repo_full}")
+            if result.returncode != 0:
+                if "already exists" not in _command_detail(result).lower():
+                    hint = "Check org access (autotests-cloud may block private repos due to trade controls)."
+                    detail = _command_detail(result)
+                    raise AutomationError(
+                        f"Failed to create repo {repo_full} from template {template}: {detail}. {hint}"
+                        if detail
+                        else f"Failed to create repo {repo_full} from template {template}. {hint}"
+                    )
+            else:
+                created = True
+                logger.info("Created GitHub repo %s from template %s", repo_url, template)
+
+        if created:
+            self._wait_for_template_contents(repo_name)
+
+        self.clone_repo(repo_name, workdir)
+        if not self._workdir_bootstrapped(workdir) and created:
+            self._wait_for_template_contents(repo_name)
+            self.clone_repo(repo_name, workdir)
+        if not self._workdir_bootstrapped(workdir):
+            raise AutomationError(
+                f"{repo_full} has no Gradle build after clone. Runtime repos must come from "
+                f"`gh repo create --template {template}`; automator does not force-push "
+                "trimmed templates/tests-java."
+            )
+        self._ensure_runtime_workflow(repo_name, workdir)
+        self._configure_allure_ci(repo_name, allure_project_id, allure_endpoint, allure_token)
         self.ensure_github_pages(repo_name)
         return repo_url
 
@@ -320,7 +407,7 @@ class GitHubClient:
                 "run",
                 "list",
                 "--workflow",
-                "selenoid-qa-guru_github.yml",
+                RUNTIME_WORKFLOW_FILE,
                 "-R",
                 repo_full,
                 "--event",
@@ -345,19 +432,19 @@ class GitHubClient:
     ) -> WorkflowRunInfo:
         repo_full = f"{self._org}/{repo_name}"
         before_run_id = self._latest_dispatch_run_id(repo_full)
-        cmd = ["gh", "workflow", "run", "selenoid-qa-guru_github.yml", "-R", repo_full]
+        cmd = ["gh", "workflow", "run", RUNTIME_WORKFLOW_FILE, "-R", repo_full]
         if test_class:
             cmd.extend(["-f", f"test_class={test_class}"])
         if test_case_id is not None:
             cmd.extend(["-f", f"test_case_id={test_case_id}"])
-        self._run(cmd, action=f"gh workflow run selenoid-qa-guru_github.yml for {repo_full}")
+        self._run(cmd, action=f"gh workflow run {RUNTIME_WORKFLOW_FILE} for {repo_full}")
 
         list_cmd = [
             "gh",
             "run",
             "list",
             "--workflow",
-            "selenoid-qa-guru_github.yml",
+            RUNTIME_WORKFLOW_FILE,
             "-R",
             repo_full,
             "--event",

@@ -4,6 +4,17 @@ GitHub: [autotests-ai/autotests-ai-tms-automator](https://github.com/autotests-a
 
 Сервис мониторит смену workflow-статусов тест-кейсов в Allure TestOps и автоматизирует ручные тесты.
 
+## Два контура (не смешивать)
+
+| Контур | Owner | GitHub |
+|--------|-------|--------|
+| Curriculum matrix cells | `generate-matrix-cell` → verify → publish | [`autotests-ai/<profile-id>`](https://github.com/autotests-ai) (витрина ≤100, GitHub template) |
+| Runtime: TestOps manual → AI test | **tms-automator** poller | `autotests-cloud/{name}-{projectId}` |
+
+Runtime-репо создаётся так: `gh repo create --template autotests-ai/java-junit5-rest_assured-selenide` (ячейка каталога). Не trim `templates/tests-java` и не `git push --force`. Catalog cell не несёт `selenoid-qa-guru_github.yml` — automator после clone overlay'ит этот workflow обычным commit+push.
+
+Curriculum ≠ runtime: org `autotests-ai` не принимает project repos; poller не публикует ячейки матрицы.
+
 ## Workflow и статусы
 
 Workflow **6** — «Ручные тесты» (`allure.qa.guru`).
@@ -38,7 +49,7 @@ PYTHONPATH=src python scripts/patch_crystal_status.py --ensure-workflow --testca
 ## Что делает automator
 
 1. Логирует ручной кейс в комментарий TestOps
-2. При первом кейсе проекта создаёт репозиторий `https://github.com/autotests-cloud/{name}-{projectId}`
+2. При первом кейсе проекта создаёт репозиторий `https://github.com/autotests-cloud/{name}-{projectId}` через `gh repo create --template` каталог-ячейки
 3. Генерирует Java-тест в `src/test/java/tests/`, пушит в GitHub
 4. Запускает GitHub Actions (Selenoid, Allure 3 на GitHub Pages, upload в TestOps через allurectl)
 5. Пишет в TestOps комментарии со ссылками на Actions и отчёт
@@ -50,7 +61,8 @@ PYTHONPATH=src python scripts/patch_crystal_status.py --ensure-workflow --testca
 
 | Путь | Роль |
 |------|------|
-| `templates/tests-java/` | **SSOT** e2e эталон (pyramid, visual, header, embed) + GitHub bootstrap (trim в automator) |
+| GitHub template | Catalog cell [`autotests-ai/java-junit5-rest_assured-selenide`](https://github.com/autotests-ai/java-junit5-rest_assured-selenide) — runtime `gh repo create --template` |
+| `templates/tests-java/` | Локальный e2e эталон (pyramid, visual, header, embed). **Не** GitHub bootstrap |
 | `templates/vanilla-ui/` | Static UI (login/header) для local и генерации HTML |
 | `docs/rag/` | Vendored RAG (SSOT maintainer: zero-design-system) |
 | `projects/{repo_name}/` | Локальная копия GitHub project repo |
@@ -76,7 +88,7 @@ gh variable set ALLURE_ENDPOINT --body https://allure.qa.guru -R autotests-cloud
 gh secret set ALLURE_TOKEN -R autotests-cloud/qa_guru_automator_ethalon-5267
 ```
 
-GitHub bootstrap: `prepare_bootstrap_workdir()` копирует `templates/tests-java/` без e2e-классов, `pages/` и visual baselines.
+GitHub bootstrap: `GitHubClient.create_repo_from_template()` → `gh repo create --template $GITHUB_TEMPLATE` (по умолчанию `autotests-ai/java-junit5-rest_assured-selenide`), wait contents, clone, overlay `selenoid-qa-guru_github.yml` если нет. Не `prepare_bootstrap_workdir()` и не force-push.
 
 ### RAG (vendored)
 

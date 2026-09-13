@@ -53,6 +53,10 @@ class Settings(BaseSettings):
 
     github_org: str = "autotests-cloud"
     github_repo_public: bool = True
+    github_template: str = Field(
+        default="autotests-ai/java-junit5-rest_assured-selenide",
+        validation_alias=AliasChoices("GITHUB_TEMPLATE", "GITHUB_TEMPLATE_REPO"),
+    )
     github_template_dir: str = "templates/tests-java"
     github_projects_dir: str = "projects"
     template_project_dir: str = "/Users/stanislav/zero-design-system"

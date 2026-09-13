@@ -1,8 +1,8 @@
 ---
 name: bootstrap-project-repo
 description: >-
-  Creates or clones a per-project GitHub test repo from templates/tests-java
-  (trimmed by automator). Sets CI vars, local projects/ copy, and Gradle smoke.
+  Creates or clones a per-project GitHub test repo from the catalog cell
+  (gh repo create --template). Sets CI vars, local projects/ copy, and Gradle smoke.
   Use when bootstrapping autotests-cloud repo or first test for a TestOps project.
 ---
 
@@ -18,28 +18,30 @@ Base: `autotests-ai-tms-automator/`
 
 Пример: `qa_guru_automator_ethalon-5267` → `https://github.com/autotests-cloud/qa_guru_automator_ethalon-5267`
 
+## Два контура
+
+| Контур | GitHub |
+|--------|--------|
+| Curriculum | `autotests-ai/<profile-id>` — витрина / GitHub template |
+| Runtime | `autotests-cloud/{name}-{projectId}` — `gh repo create --template` |
+
+Runtime create: `gh repo create autotests-cloud/{repo} --template autotests-ai/java-junit5-rest_assured-selenide --public`. Не trim `templates/tests-java`, не `git push --force`.
+
 ## Источники
 
 | Путь | Роль |
 |------|------|
-| `templates/tests-java/` | **SSOT** — полный эталон + infra для GitHub bootstrap |
+| [`autotests-ai/java-junit5-rest_assured-selenide`](https://github.com/autotests-ai/java-junit5-rest_assured-selenide) | GitHub template для runtime-репо |
+| `templates/tests-java/` | Локальный эталон (smoke). **Не** GitHub bootstrap |
 | `templates/vanilla-ui/` | Static root для локального `-Denv=local` |
 | `docs/rag/` | **Vendored RAG** — sync skill `sync-rag` |
 | `template-project/docs/rag/` | SSOT maintainer — правки + `python scripts/sync_rag_from_template_project.py` |
 
-GitHub bootstrap: `src/automator/github/template.py` → `prepare_bootstrap_workdir()` копирует из `tests-java` **без**:
-- `src/test/java/tests/*.java` кроме `TestBase.java`
-- `src/test/java/pages/`
-- `src/test/java/tests/component/`
-- `src/test/resources/screenshots/`
-- локальных артефактов (`build/`, `history.jsonl`, `app-path-local*`)
+GitHub bootstrap: `src/automator/github/client.py` → `create_repo_from_template()`.
 
 ## Что копируется в GitHub
 
-| Источник | Содержимое |
-|----------|------------|
-| `templates/tests-java/` (trim) | TestBase, CI, config, helpers, unit tests |
-| skill `automate-manual-test` | добавляет тесты по кейсам TestOps |
+GitHub копирует catalog cell целиком (`--template`). Automator затем добавляет тесты skill `automate-manual-test`.
 
 Локальная копия: `projects/{repo_name}/`
 
@@ -65,7 +67,7 @@ GitHub bootstrap: `src/automator/github/template.py` → `prepare_bootstrap_work
 2. Минимум: `e2e-config-keys`, `test-taxonomy`, `test-style-ladder`, `po-locators`, `po-step`, `base-lifecycle`, `cfg-env-profile`
 3. Header-кейсы: + `e2e-header/hdr-selectors.md`, `hdr-behavior.md`
 
-Automator при `ensure_repository()` копирует канон RAG в `docs/rag/` project repo.
+Automator при `ensure_repository()` создаёт runtime-репо из catalog template и клонирует в `projects/{repo_name}/`.
 
 ### 1. Проверить существование
 
@@ -84,7 +86,7 @@ python -m pip install -e .
 # .env: ALLURE_API_TOKEN, gh auth
 ```
 
-`ProjectRepositoryService.ensure_repository()` → `prepare_bootstrap_workdir()` из `templates/tests-java/`.
+`ProjectRepositoryService.ensure_repository()` → `gh repo create --template autotests-ai/java-junit5-rest_assured-selenide`, затем overlay `selenoid-qa-guru_github.yml` если в ячейке нет workflow.
 
 ### 3. GitHub vars/secrets (TestOps upload)
 
@@ -140,5 +142,5 @@ src/test/java/tests/
 - [ ] `gradle test -Denv=ci` green после первого сгенерированного теста
 - [ ] allurectl upload в workflow (vars + secret)
 - [ ] TestOps layer mappings (`sync_testops_layer_mappings.py --project-id {id}`)
-- [ ] infra правится только в `templates/tests-java/` — отдельный sync не нужен
+- [ ] runtime-репо создан `--template` catalog cell, не trim + force-push
 - [ ] vendored `docs/rag/` актуален (`python scripts/sync_rag_from_template_project.py --check`)

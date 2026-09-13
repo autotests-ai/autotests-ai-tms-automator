@@ -32,7 +32,6 @@ class ProjectRepositoryService:
         store: StateStore,
         testops: AllureTestOpsClient,
         github: GitHubClient,
-        template_dir: Path,
         projects_dir: Path,
         rag_canon_dir: Path,
     ) -> None:
@@ -40,7 +39,6 @@ class ProjectRepositoryService:
         self._store = store
         self._testops = testops
         self._github = github
-        self._template_dir = template_dir
         self._projects_dir = projects_dir
         self._rag_canon_dir = rag_canon_dir
 
@@ -95,13 +93,11 @@ class ProjectRepositoryService:
         description = f"UI autotests for Allure TestOps project {project_id} ({project_name})"
         repo_url = self._github.create_repo_from_template(
             repo_name=repo_name,
-            template_dir=self._template_dir,
             workdir=workdir,
             allure_project_id=project_id,
             allure_endpoint=self._settings.allure_endpoint,
             allure_token=self._settings.allure_api_token,
             description=description,
-            rag_source=self._rag_canon_dir,
         )
         record = {
             "project_id": project_id,

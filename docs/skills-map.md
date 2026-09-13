@@ -72,5 +72,5 @@ Rules: `.cursor/rules/*.mdc`
 
 | Путь | Роль |
 |------|------|
-| `templates/tests-java/` | SSOT e2e эталон + GitHub bootstrap (trim в automator) |
+| `templates/tests-java/` | Локальный e2e эталон (не GitHub bootstrap) |
 | `templates/vanilla-ui/` | Static UI для local/генерации |

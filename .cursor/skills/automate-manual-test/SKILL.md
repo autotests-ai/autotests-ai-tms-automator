@@ -29,7 +29,7 @@ Example: `qa_guru_automator_ethalon-5267` (project `5267`)
 
 **Эталон (разработка):** `templates/tests-java/` — pyramid, PO, visual baselines, RAG patterns.  
 **Генератор Python:** `src/automator/generator/` — step + `[data-testid=…]` для TestOps-кейсов.  
-**GitHub bootstrap:** trim из `templates/tests-java/` (`prepare_bootstrap_workdir`) — infra без e2e test classes.  
+**GitHub bootstrap:** `gh repo create --template autotests-ai/java-junit5-rest_assured-selenide` (не trim `templates/tests-java`, не force-push).  
 **Local project copy:** `projects/{repo_name}/`
 
 См. skill `bootstrap-project-repo` для первого repo.

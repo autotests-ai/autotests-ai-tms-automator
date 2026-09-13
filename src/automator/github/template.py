@@ -1,4 +1,8 @@
-"""Prepare consumer GitHub repos from the tests-java etalon."""
+"""Local etalon copy helpers.
+
+Runtime GitHub create uses ``gh repo create --template`` (catalog cell).
+Do not call these from ``GitHubClient`` — no trim + force-push.
+"""
 
 from __future__ import annotations
 

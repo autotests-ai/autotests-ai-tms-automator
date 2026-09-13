@@ -1,8 +1,12 @@
 import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from automator.github.client import GitHubClient
+from automator.config import Settings
+from automator.errors import AutomationError
+from automator.github.client import DEFAULT_TEMPLATE_REPO, GitHubClient, RUNTIME_WORKFLOW_FILE
 
 
 class DispatchWorkflowTests(TestCase):
@@ -26,7 +30,7 @@ class DispatchWorkflowTests(TestCase):
         self.assertEqual(info.run_id, 101)
         self.assertEqual(info.status, "queued")
         dispatch_cmd = run.call_args_list[1].args[0]
-        self.assertEqual(dispatch_cmd[:4], ["gh", "workflow", "run", "selenoid-qa-guru_github.yml"])
+        self.assertEqual(dispatch_cmd[:4], ["gh", "workflow", "run", RUNTIME_WORKFLOW_FILE])
         self.assertIn("test_case_id=47326", dispatch_cmd)
 
 
@@ -80,3 +84,182 @@ class GitHubPagesTests(TestCase):
             create_cmd = run.call_args_list[1].args[0]
             self.assertIn("ref=refs/heads/gh-pages", create_cmd)
             self.assertIn("sha=abc123", create_cmd)
+
+
+class CreateRepoFromTemplateTests(TestCase):
+    def setUp(self) -> None:
+        self.client = GitHubClient(
+            "autotests-cloud",
+            template_repo=DEFAULT_TEMPLATE_REPO,
+        )
+
+    def test_settings_default_template_is_catalog_cell(self) -> None:
+        settings = Settings(allure_api_token="token", _env_file=None)
+        self.assertEqual(settings.github_template, DEFAULT_TEMPLATE_REPO)
+        self.assertEqual(settings.github_org, "autotests-cloud")
+
+    def _fake_clone(self, _repo_name: str, workdir: Path) -> None:
+        workdir.mkdir(parents=True, exist_ok=True)
+        (workdir / "build.gradle").write_text("plugins {}\n", encoding="utf-8")
+
+    def _write_workflow_src(self, tmp: Path) -> Path:
+        src = tmp / RUNTIME_WORKFLOW_FILE
+        src.write_text("name: probe\non:\n  workflow_dispatch:\n", encoding="utf-8")
+        return src
+
+    def _create(self, workdir: Path, **kwargs):
+        defaults = dict(
+            repo_name="demo-5298",
+            workdir=workdir,
+            allure_project_id=5298,
+            allure_endpoint="https://allure.qa.guru",
+            allure_token="token",
+            description="UI autotests for Allure TestOps project 5298 (demo)",
+        )
+        defaults.update(kwargs)
+        return self.client.create_repo_from_template(**defaults)
+
+    def _create_with_workflow_src(self, tmp: Path, workdir: Path, **kwargs):
+        self.client._runtime_workflow = self._write_workflow_src(tmp)
+        return self._create(workdir, **kwargs)
+
+    def test_create_uses_catalog_cell_template_not_force_push(self) -> None:
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            workdir = tmp_path / "demo-5298"
+            with (
+                patch.object(GitHubClient, "repo_exists", return_value=False),
+                patch.object(GitHubClient, "_wait_for_template_contents") as wait,
+                patch.object(GitHubClient, "clone_repo", side_effect=self._fake_clone) as clone,
+                patch.object(GitHubClient, "ensure_github_pages") as pages,
+                patch.object(GitHubClient, "_run") as run,
+            ):
+                run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+                url = self._create_with_workflow_src(tmp_path, workdir)
+                self.assertEqual(url, "https://github.com/autotests-cloud/demo-5298")
+                create_cmd = run.call_args_list[0].args[0]
+                self.assertEqual(create_cmd[:4], ["gh", "repo", "create", "autotests-cloud/demo-5298"])
+                self.assertEqual(create_cmd[create_cmd.index("--template") + 1], DEFAULT_TEMPLATE_REPO)
+                self.assertIn("--public", create_cmd)
+                wait.assert_called_once_with("demo-5298")
+                clone.assert_called_once_with("demo-5298", workdir)
+                pages.assert_called_once_with("demo-5298")
+                self.assertTrue((workdir / ".github/workflows" / RUNTIME_WORKFLOW_FILE).is_file())
+                cmds = [call.args[0] for call in run.call_args_list]
+
+        self.assertTrue(
+            any(cmd[:4] == ["gh", "variable", "set", "ALLURE_PROJECT_ID"] for cmd in cmds)
+        )
+        self.assertTrue(any(cmd[:3] == ["git", "push", "origin"] and "--force" not in cmd for cmd in cmds))
+        for cmd in cmds:
+            self.assertNotIn("--force", cmd)
+            self.assertNotEqual(cmd[:2], ["git", "init"])
+
+    def test_create_skips_gh_create_when_repo_exists(self) -> None:
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            workdir = tmp_path / "demo-5298"
+            with (
+                patch.object(GitHubClient, "repo_exists", return_value=True),
+                patch.object(GitHubClient, "_wait_for_template_contents") as wait,
+                patch.object(GitHubClient, "clone_repo", side_effect=self._fake_clone) as clone,
+                patch.object(GitHubClient, "ensure_github_pages"),
+                patch.object(GitHubClient, "_run") as run,
+            ):
+                run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+                self._create_with_workflow_src(tmp_path, workdir)
+
+        wait.assert_not_called()
+        clone.assert_called_once()
+        cmds = [call.args[0] for call in run.call_args_list]
+        self.assertFalse(any(cmd[:3] == ["gh", "repo", "create"] for cmd in cmds))
+        for cmd in cmds:
+            self.assertNotIn("--force", cmd)
+
+    def test_create_tolerates_already_exists_without_force_push(self) -> None:
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            workdir = tmp_path / "demo-5298"
+            with (
+                patch.object(GitHubClient, "repo_exists", return_value=False),
+                patch.object(GitHubClient, "_wait_for_template_contents") as wait,
+                patch.object(GitHubClient, "clone_repo", side_effect=self._fake_clone),
+                patch.object(GitHubClient, "ensure_github_pages"),
+                patch.object(GitHubClient, "_run") as run,
+            ):
+                def side_effect(cmd, **_kwargs):
+                    if cmd[:3] == ["gh", "repo", "create"]:
+                        return MagicMock(
+                            returncode=1,
+                            stdout="",
+                            stderr="Name already exists on this account",
+                        )
+                    return MagicMock(returncode=0, stdout="", stderr="")
+
+                run.side_effect = side_effect
+                url = self._create_with_workflow_src(tmp_path, workdir)
+
+        self.assertEqual(url, "https://github.com/autotests-cloud/demo-5298")
+        wait.assert_not_called()
+        cmds = [call.args[0] for call in run.call_args_list]
+        for cmd in cmds:
+            self.assertNotIn("--force", cmd)
+
+    def test_create_private_uses_private_flag(self) -> None:
+        self.client = GitHubClient("autotests-cloud", repo_public=False)
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            workdir = tmp_path / "demo-5298"
+            with (
+                patch.object(GitHubClient, "repo_exists", return_value=False),
+                patch.object(GitHubClient, "_wait_for_template_contents"),
+                patch.object(GitHubClient, "clone_repo", side_effect=self._fake_clone),
+                patch.object(GitHubClient, "ensure_github_pages"),
+                patch.object(GitHubClient, "_run") as run,
+            ):
+                run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+                self._create_with_workflow_src(tmp_path, workdir)
+
+        create_cmd = run.call_args_list[0].args[0]
+        self.assertIn("--private", create_cmd)
+        self.assertNotIn("--public", create_cmd)
+
+    def test_create_rejects_empty_clone_instead_of_force_pushing_trim(self) -> None:
+        with TemporaryDirectory() as tmp:
+            workdir = Path(tmp) / "demo-5298"
+            with (
+                patch.object(GitHubClient, "repo_exists", return_value=True),
+                patch.object(GitHubClient, "clone_repo") as clone,
+                patch.object(GitHubClient, "ensure_github_pages") as pages,
+                patch.object(GitHubClient, "_run") as run,
+            ):
+                clone.side_effect = lambda _name, dest: dest.mkdir(parents=True, exist_ok=True)
+                with self.assertRaises(AutomationError) as raised:
+                    self._create(workdir)
+
+        self.assertIn("--template", str(raised.exception))
+        self.assertIn("force-push", str(raised.exception).lower())
+        pages.assert_not_called()
+        run.assert_not_called()
+
+    def test_create_skips_workflow_overlay_when_already_present(self) -> None:
+        def clone_with_workflow(_name: str, dest: Path) -> None:
+            self._fake_clone(_name, dest)
+            wf = dest / ".github" / "workflows"
+            wf.mkdir(parents=True)
+            (wf / RUNTIME_WORKFLOW_FILE).write_text("name: from-template\n", encoding="utf-8")
+
+        with TemporaryDirectory() as tmp:
+            workdir = Path(tmp) / "demo-5298"
+            with (
+                patch.object(GitHubClient, "repo_exists", return_value=True),
+                patch.object(GitHubClient, "clone_repo", side_effect=clone_with_workflow),
+                patch.object(GitHubClient, "ensure_github_pages"),
+                patch.object(GitHubClient, "_run") as run,
+            ):
+                run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+                self._create(workdir)
+
+        cmds = [call.args[0] for call in run.call_args_list]
+        self.assertFalse(any(cmd[:2] == ["git", "commit"] for cmd in cmds))
+        self.assertFalse(any(cmd[:2] == ["git", "push"] for cmd in cmds))

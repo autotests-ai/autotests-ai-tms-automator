@@ -6,7 +6,7 @@ Selenide + JUnit 5 + Allure. **SSOT** e2e в `autotests-ai-tms-automator`.
 **RAG:** [`docs/rag/testing/`](../../docs/rag/testing/), [`docs/rag/testing-header/`](../../docs/rag/testing-header/).  
 **ADR:** [`docs/adr/002-e2e-canonical-patterns.md`](../../docs/adr/002-e2e-canonical-patterns.md), [`003-header-smoke-e2e.md`](../../docs/adr/003-header-smoke-e2e.md), [`004-fast-testops-warm-pool.md`](../../docs/adr/004-fast-testops-warm-pool.md).
 
-**GitHub bootstrap:** тот же каталог — automator копирует infra через `prepare_bootstrap_workdir()` (без e2e test classes, `pages/`, baselines).  
+**GitHub bootstrap:** runtime-репо = `gh repo create --template autotests-ai/java-junit5-rest_assured-selenide`. Этот каталог — локальный эталон, automator его не trim'ит и не force-push'ит.  
 **CI workflow:** `.github/workflows/selenoid-qa-guru_github.yml` (`name: qa_guru_automator_ethalon-5267 Tests`).
 
 ## Prerequisites

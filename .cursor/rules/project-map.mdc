@@ -5,11 +5,12 @@ alwaysApply: true
 
 # autotests-ai-tms-automator
 
-TestOps → GitHub `autotests-cloud/{name}-{id}` → Selenoid CI → Allure 3 + allurectl.
+TestOps → GitHub `autotests-cloud/{name}-{id}` (`gh repo create --template` catalog cell) → Selenoid CI → Allure 3 + allurectl.
 
 | Зона | Путь |
 |------|------|
-| E2e эталон | `templates/tests-java/` — bootstrap SSOT |
+| Curriculum template | `autotests-ai/java-junit5-rest_assured-selenide` — runtime `gh repo create --template` |
+| E2e эталон | `templates/tests-java/` — локальный smoke, не GitHub bootstrap |
 | Static UI | `templates/vanilla-ui/` — login/header harness |
 | RAG (vendored) | `docs/rag/` — sync `scripts/sync_rag_from_template_project.py` |
 | Generator | `src/automator/` |
@@ -18,4 +19,4 @@ TestOps → GitHub `autotests-cloud/{name}-{id}` → Selenoid CI → Allure 3 + 
 Skills **только здесь:** `automate-manual-test`, `bootstrap-project-repo` (не дублировать в `qa-guru-home/.cursor/skills/`).
 Локальный smoke: `templates/vanilla-ui` HTTP `:3000` + `templates/tests-java` `-DincludeTags=smoke -DexcludeTags=visual`.
 
-Запреты: не пушить полный эталонный suite в consumer — trim bootstrap + сгенерированные тесты; не коммитить `build/`, `projects/`, `.env`.
+Запреты: runtime-репо = GitHub template catalog cell, не trim `templates/tests-java` + force-push; не коммитить `build/`, `projects/`, `.env`.
