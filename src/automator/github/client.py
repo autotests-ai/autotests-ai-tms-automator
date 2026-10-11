@@ -44,6 +44,18 @@ class WorkflowRunInfo:
 # Curriculum catalog cell (GitHub template). Runtime repos live in autotests-cloud.
 DEFAULT_TEMPLATE_REPO = "autotests-ai/java-junit5-rest_assured-selenide"
 RUNTIME_WORKFLOW_FILE = "selenoid-qa-guru_github.yml"
+GITHUB_CREDENTIAL_HELPER_KEY = "credential.https://github.com.helper"
+
+
+def _git_with_gh_auth(*args: str) -> list[str]:
+    return [
+        "git",
+        "-c",
+        f"{GITHUB_CREDENTIAL_HELPER_KEY}=",
+        "-c",
+        f"{GITHUB_CREDENTIAL_HELPER_KEY}=!gh auth git-credential",
+        *args,
+    ]
 
 
 class GitHubClient:
@@ -80,9 +92,9 @@ class GitHubClient:
             _raise_command_failed(result, action or " ".join(cmd))
         return result
 
-    def _git_remote_url(self, repo_full: str) -> str:
-        token = self._run(["gh", "auth", "token"], action="gh auth token").stdout.strip()
-        return f"https://x-access-token:{token}@github.com/{repo_full}.git"
+    @staticmethod
+    def _git_remote_url(repo_full: str) -> str:
+        return f"https://github.com/{repo_full}.git"
 
     def repo_exists(self, repo_name: str) -> bool:
         result = subprocess.run(
@@ -272,7 +284,7 @@ class GitHubClient:
         if commit.returncode != 0:
             return
         self._run(
-            ["git", "push", "origin", "main"],
+            _git_with_gh_auth("push", "origin", "main"),
             cwd=workdir,
             action=f"git push workflow to {repo_full}",
         )
@@ -380,7 +392,7 @@ class GitHubClient:
             action="git remote set-url",
         )
         pull = self._run(
-            ["git", "pull", "--rebase", "origin", "main"],
+            _git_with_gh_auth("pull", "--rebase", "origin", "main"),
             cwd=workdir,
             check=False,
             action=f"git pull from {repo_full}",
@@ -398,7 +410,7 @@ class GitHubClient:
             self._run(["git", "add", path], cwd=workdir, action=f"git add {path}")
         commit_message = message if "[skip ci]" in message.lower() else f"{message}\n\n[skip ci]"
         self._run(["git", "commit", "-m", commit_message], cwd=workdir, action="git commit")
-        self._run(["git", "push", "origin", "main"], cwd=workdir, action=f"git push to {repo_full}")
+        self._run(_git_with_gh_auth("push", "origin", "main"), cwd=workdir, action=f"git push to {repo_full}")
 
     def _latest_dispatch_run_id(self, repo_full: str) -> int | None:
         result = self._run(

@@ -1,12 +1,41 @@
 import json
+import os
+import shutil
+import subprocess
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest import TestCase
+from unittest import TestCase, skipUnless
 from unittest.mock import MagicMock, patch
+from urllib.parse import urlsplit
 
 from automator.config import Settings
 from automator.errors import AutomationError
 from automator.github.client import DEFAULT_TEMPLATE_REPO, GitHubClient, RUNTIME_WORKFLOW_FILE
+
+FAKE_GH_TOKEN = "gho_fake-token-for-tests"
+GH_CREDENTIAL_HELPER_ARGS = [
+    "-c",
+    "credential.https://github.com.helper=",
+    "-c",
+    "credential.https://github.com.helper=!gh auth git-credential",
+]
+GIT_TEST_ENV = {
+    "GIT_CONFIG_GLOBAL": os.devnull,
+    "GIT_CONFIG_NOSYSTEM": "1",
+    "GIT_AUTHOR_NAME": "automator-test",
+    "GIT_AUTHOR_EMAIL": "automator-test@example.invalid",
+    "GIT_COMMITTER_NAME": "automator-test",
+    "GIT_COMMITTER_EMAIL": "automator-test@example.invalid",
+}
+
+
+def _git_args(cmd: list[str]) -> list[str]:
+    if cmd[:1] != ["git"]:
+        return cmd
+    rest = cmd[1:]
+    while rest[:1] == ["-c"]:
+        rest = rest[2:]
+    return ["git", *rest]
 
 
 class DispatchWorkflowTests(TestCase):
@@ -150,7 +179,9 @@ class CreateRepoFromTemplateTests(TestCase):
         self.assertTrue(
             any(cmd[:4] == ["gh", "variable", "set", "ALLURE_PROJECT_ID"] for cmd in cmds)
         )
-        self.assertTrue(any(cmd[:3] == ["git", "push", "origin"] and "--force" not in cmd for cmd in cmds))
+        self.assertTrue(
+            any(_git_args(cmd)[:3] == ["git", "push", "origin"] and "--force" not in cmd for cmd in cmds)
+        )
         for cmd in cmds:
             self.assertNotIn("--force", cmd)
             self.assertNotEqual(cmd[:2], ["git", "init"])
@@ -262,4 +293,108 @@ class CreateRepoFromTemplateTests(TestCase):
 
         cmds = [call.args[0] for call in run.call_args_list]
         self.assertFalse(any(cmd[:2] == ["git", "commit"] for cmd in cmds))
-        self.assertFalse(any(cmd[:2] == ["git", "push"] for cmd in cmds))
+        self.assertFalse(any(_git_args(cmd)[:2] == ["git", "push"] for cmd in cmds))
+
+
+@skipUnless(shutil.which("git"), "git is required")
+class GitRemoteCredentialsTests(TestCase):
+    def setUp(self) -> None:
+        self.client = GitHubClient("autotests-cloud")
+        self.commands: list[list[str]] = []
+        env = patch.dict(os.environ, GIT_TEST_ENV)
+        env.start()
+        self.addCleanup(env.stop)
+
+    @staticmethod
+    def _git(cwd: Path, *args: str) -> str:
+        return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
+
+    def _init_template(self, path: Path) -> Path:
+        path.mkdir(parents=True)
+        (path / "build.gradle").write_text("plugins {}\n", encoding="utf-8")
+        self._git(path, "init", "--quiet", "-b", "main")
+        self._git(path, "add", ".")
+        self._git(path, "commit", "--quiet", "-m", "template")
+        return path
+
+    def _fake_github(self, template: Path):
+        real_run = GitHubClient._run
+
+        def run(client: GitHubClient, cmd: list[str], **kwargs):
+            self.commands.append(list(cmd))
+            if cmd[:3] == ["gh", "auth", "token"]:
+                return subprocess.CompletedProcess(cmd, 0, f"{FAKE_GH_TOKEN}\n", "")
+            if cmd[:3] == ["gh", "repo", "clone"]:
+                return real_run(client, ["git", "clone", "--quiet", str(template), cmd[4]])
+            if cmd[0] == "gh" or _git_args(cmd)[1:2] in (["push"], ["pull"]):
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+            return real_run(client, cmd, **kwargs)
+
+        return patch.object(GitHubClient, "_run", autospec=True, side_effect=run)
+
+    def _assert_origin_has_no_credentials(self, workdir: Path) -> None:
+        origin = self._git(workdir, "remote", "get-url", "origin")
+        parts = urlsplit(origin)
+        self.assertEqual(origin, "https://github.com/autotests-cloud/demo-5298.git")
+        self.assertIsNone(parts.username)
+        self.assertIsNone(parts.password)
+        config = (workdir / ".git" / "config").read_text(encoding="utf-8")
+        self.assertNotIn(FAKE_GH_TOKEN, config)
+        self.assertNotIn("x-access-token", config)
+        for cmd in self.commands:
+            self.assertFalse(any(FAKE_GH_TOKEN in arg for arg in cmd), cmd)
+
+    def _assert_remote_ops_use_gh_credential_helper(self, *subcommands: str) -> None:
+        remote_ops = [cmd for cmd in self.commands if cmd[:1] == ["git"] and _git_args(cmd)[1] in subcommands]
+        self.assertEqual({_git_args(cmd)[1] for cmd in remote_ops}, set(subcommands))
+        for cmd in remote_ops:
+            self.assertEqual(cmd[1:5], GH_CREDENTIAL_HELPER_ARGS)
+
+    def test_create_from_template_leaves_origin_without_login_or_token(self) -> None:
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            template = self._init_template(tmp_path / "template")
+            workflow = tmp_path / RUNTIME_WORKFLOW_FILE
+            workflow.write_text("name: probe\non:\n  workflow_dispatch:\n", encoding="utf-8")
+            self.client._runtime_workflow = workflow
+            workdir = tmp_path / "projects" / "demo-5298"
+            with (
+                patch.object(GitHubClient, "repo_exists", return_value=False),
+                patch.object(GitHubClient, "_wait_for_template_contents"),
+                patch.object(GitHubClient, "ensure_github_pages"),
+                self._fake_github(template),
+            ):
+                self.client.create_repo_from_template(
+                    repo_name="demo-5298",
+                    workdir=workdir,
+                    allure_project_id=5298,
+                    allure_endpoint="https://allure.qa.guru",
+                    allure_token="token",
+                    description="UI autotests for Allure TestOps project 5298 (demo)",
+                )
+            self._assert_origin_has_no_credentials(workdir)
+        self._assert_remote_ops_use_gh_credential_helper("push")
+
+    def test_push_test_file_replaces_legacy_token_remote(self) -> None:
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            template = self._init_template(tmp_path / "template")
+            workdir = tmp_path / "projects" / "demo-5298"
+            self._git(tmp_path, "clone", "--quiet", str(template), str(workdir))
+            self._git(
+                workdir,
+                "remote",
+                "set-url",
+                "origin",
+                f"https://x-access-token:{FAKE_GH_TOKEN}@github.com/autotests-cloud/demo-5298.git",
+            )
+            with self._fake_github(template):
+                self.client.push_test_file(
+                    repo_name="demo-5298",
+                    workdir=workdir,
+                    relative_path="src/test/java/tests/LoginTests.java",
+                    content="class LoginTests {}\n",
+                    message="Add LoginTests",
+                )
+            self._assert_origin_has_no_credentials(workdir)
+        self._assert_remote_ops_use_gh_credential_helper("pull", "push")
