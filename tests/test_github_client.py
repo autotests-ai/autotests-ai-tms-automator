@@ -295,6 +295,18 @@ class CreateRepoFromTemplateTests(TestCase):
         self.assertFalse(any(cmd[:2] == ["git", "commit"] for cmd in cmds))
         self.assertFalse(any(_git_args(cmd)[:2] == ["git", "push"] for cmd in cmds))
 
+    def test_allure_token_reaches_gh_secret_via_stdin_not_argv(self) -> None:
+        with patch.object(GitHubClient, "_run") as run:
+            run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+            self.client._configure_allure_ci("demo-5298", 5298, "https://allure.qa.guru/", "allure-secret")
+
+        secret_calls = [c for c in run.call_args_list if c.args[0][:4] == ["gh", "secret", "set", "ALLURE_TOKEN"]]
+        self.assertEqual(len(secret_calls), 1)
+        self.assertNotIn("--body", secret_calls[0].args[0])
+        self.assertEqual(secret_calls[0].kwargs["stdin"], "allure-secret")
+        for c in run.call_args_list:
+            self.assertNotIn("allure-secret", c.args[0])
+
 
 @skipUnless(shutil.which("git"), "git is required")
 class GitRemoteCredentialsTests(TestCase):

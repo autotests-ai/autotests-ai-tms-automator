@@ -80,6 +80,7 @@ class GitHubClient:
         action: str | None = None,
         check: bool = True,
         timeout: int | None = None,
+        stdin: str | None = None,
     ) -> subprocess.CompletedProcess[str]:
         result = subprocess.run(
             cmd,
@@ -87,6 +88,7 @@ class GitHubClient:
             text=True,
             cwd=cwd,
             timeout=timeout,
+            input=stdin,
         )
         if check and result.returncode != 0:
             _raise_command_failed(result, action or " ".join(cmd))
@@ -244,7 +246,8 @@ class GitHubClient:
             action=f"gh variable set ALLURE_ENDPOINT for {repo_full}",
         )
         self._run(
-            ["gh", "secret", "set", "ALLURE_TOKEN", "--body", allure_token, "-R", repo_full],
+            ["gh", "secret", "set", "ALLURE_TOKEN", "-R", repo_full],
+            stdin=allure_token,
             action=f"gh secret set ALLURE_TOKEN for {repo_full}",
         )
 
