@@ -27,7 +27,7 @@ related: [hdr-scope-4b, react-app-multistack]
 
 ## Scenarios
 
-1. Burger visible; inline `header-github` / `header-github-pages` hidden on mobile
+1. Burger visible; inline `header-github` hidden on mobile
 2. Open menu → `header-menu-nav-*`, `header-menu-search-input`, `header-menu-github`
 3. Active route mirrored in menu nav
 4. Menu link click closes menu

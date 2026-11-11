@@ -21,7 +21,6 @@ public class HeaderComponent {
     private final SelenideElement langLabel = $("[data-testid='header-lang-label']");
     private final SelenideElement themeToggle = $("[data-testid='header-theme-toggle']");
     private final SelenideElement githubLink = $("[data-testid='header-github']");
-    private final SelenideElement githubPagesLink = $("[data-testid='header-github-pages']");
 
     public SelenideElement root() {
         return root;
@@ -29,7 +28,7 @@ public class HeaderComponent {
 
     @Step("Verify external header links have href")
     public HeaderComponent shouldHaveExternalLinkHrefs() {
-        for (var link : List.of(brandLink, githubLink, githubPagesLink)) {
+        for (var link : List.of(brandLink, githubLink)) {
             shouldHaveNonBlankHref(link);
         }
         return this;
